@@ -1,0 +1,63 @@
+[
+  {
+    "id": "1",
+    "name": "Café Expresso",
+    "price": 3.50,
+    "code": "7891234567890",
+    "category": "Bebidas",
+    "cost": 1.00,
+    "stock": 100,
+    "quick": true
+  },
+  {
+    "id": "2",
+    "name": "Pão de Açúcar",
+    "price": 2.00,
+    "code": "7891234567891",
+    "category": "Padaria",
+    "cost": 0.80,
+    "stock": 50,
+    "quick": true
+  },
+  {
+    "id": "3",
+    "name": "Refrigerante 350ml",
+    "price": 5.00,
+    "code": "7891234567892",
+    "category": "Bebidas",
+    "cost": 2.50,
+    "stock": 30,
+    "quick": true
+  },
+  {
+    "id": "4",
+    "name": "Salgadinho",
+    "price": 4.50,
+    "code": "7891234567893",
+    "category": "Snacks",
+    "cost": 2.00,
+    "stock": 40,
+    "quick": false
+  },
+  {
+    "id": "5",
+    "name": "Água Mineral 500ml",
+    "price": 2.50,
+    "code": "7891234567894",
+    "category": "Bebidas",
+    "cost": 1.00,
+    "stock": 60,
+    "quick": true
+  },
+  {
+    "id": "6",
+    "name": "Chocolate 90g",
+    "price": 6.00,
+    "code": "7891234567895",
+    "category": "Doces",
+    "cost": 3.00,
+    "stock": 25,
+    "quick": false
+  }
+]
+

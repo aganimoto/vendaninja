@@ -1,0 +1,25 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Note: Assets should be committed
+# Uncomment if you don't want to commit large binary files
+# *.mp3
+# *.png
+# *.jpg
+# *.jpeg
+

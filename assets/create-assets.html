@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Assets do VendaNinja</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .asset-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #3182ce;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #2c5aa0;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🇧🇷 Criar Assets do VendaNinja</h1>
+    <p>Use esta página para gerar os assets necessários para o VendaNinja.</p>
+
+    <div class="asset-section">
+        <h2>1. Logo Ninja (logo-ninja.png)</h2>
+        <p>Clique no botão para gerar e baixar o logo:</p>
+        <canvas id="logoCanvas" width="200" height="200"></canvas>
+        <br>
+        <button onclick="generateLogo()">Gerar Logo</button>
+        <button onclick="downloadLogo()">Baixar Logo (PNG)</button>
+    </div>
+
+    <div class="asset-section">
+        <h2>2. Ícone PWA (icon-192.png)</h2>
+        <p>Clique no botão para gerar e baixar o ícone:</p>
+        <canvas id="iconCanvas" width="192" height="192"></canvas>
+        <br>
+        <button onclick="generateIcon()">Gerar Ícone</button>
+        <button onclick="downloadIcon()">Baixar Ícone (PNG)</button>
+    </div>
+
+    <div class="asset-section">
+        <h2>3. Som Shuriken (shuriken.mp3)</h2>
+        <p>Para criar o som:</p>
+        <ul>
+            <li>Use um editor de áudio como Audacity</li>
+            <li>Crie um som curto de "whoosh" ou "swish" (0.5 segundos)</li>
+            <li>Ou baixe um efeito sonoro gratuito de <a href="https://freesound.org" target="_blank">freesound.org</a></li>
+            <li>Salve como shuriken.mp3</li>
+        </ul>
+        <p><strong>Nota:</strong> O sistema funcionará sem o som, mas sem feedback sonoro ao adicionar itens.</p>
+    </div>
+
+    <script>
+        function drawNinja(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const centerX = size / 2;
+            const centerY = size / 2;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Draw ninja head
+            ctx.fillStyle = '#2d3748';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY - 40, 30, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw ninja body
+            ctx.fillRect(centerX - 30, centerY - 10, 60, 50);
+            ctx.beginPath();
+            ctx.roundRect(centerX - 30, centerY - 10, 60, 50, 5);
+            ctx.fill();
+            
+            // Draw eyes
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(centerX - 10, centerY - 45, 3, 0, Math.PI * 2);
+            ctx.arc(centerX + 10, centerY - 45, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw mouth
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY - 35, 8, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw shuriken
+            ctx.fillStyle = '#f56565';
+            ctx.save();
+            ctx.translate(centerX + 60, centerY - 60);
+            ctx.rotate(Math.PI / 4);
+            ctx.fillRect(-5, -20, 10, 40);
+            ctx.fillRect(-20, -5, 40, 10);
+            ctx.restore();
+        }
+
+        function generateLogo() {
+            const canvas = document.getElementById('logoCanvas');
+            drawNinja(canvas, 200);
+        }
+
+        function generateIcon() {
+            const canvas = document.getElementById('iconCanvas');
+            drawNinja(canvas, 192);
+        }
+
+        function downloadLogo() {
+            const canvas = document.getElementById('logoCanvas');
+            const link = document.createElement('a');
+            link.download = 'logo-ninja.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function downloadIcon() {
+            const canvas = document.getElementById('iconCanvas');
+            const link = document.createElement('a');
+            link.download = 'icon-192.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        // Generate on load
+        window.onload = function() {
+            generateLogo();
+            generateIcon();
+        };
+    </script>
+</body>
+</html>
+

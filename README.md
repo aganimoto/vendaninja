@@ -105,8 +105,8 @@ Veja a seção [Deploy](#deploy) para instruções detalhadas de publicação.
 
 ```
 vendaninja/
-├── index.html              # Página principal do PDV
-├── landing.html            # Página de apresentação e documentação
+├── index.html              # Página de apresentação e documentação (landing page)
+├── pdv.html                # Página principal do PDV
 ├── styles.css              # Estilos do PDV
 ├── styles-landing.css      # Estilos da landing page
 ├── script.js               # Lógica principal do PDV
@@ -236,7 +236,7 @@ vendaninja/
 
 ### Adicionando Novas Funcionalidades
 
-1. Estrutura HTML em `index.html`
+1. Estrutura HTML em `pdv.html`
 2. Estilos em `styles.css`
 3. Lógica JavaScript em `script.js` ou novo arquivo
 4. Atualizar Service Worker se necessário

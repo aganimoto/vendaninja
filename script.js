@@ -294,12 +294,24 @@ function initializeEventListeners() {
 
 // ===== Modal Functions =====
 function openModal(modalId) {
-    document.getElementById(modalId).classList.add('active');
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('active');
+        // Trigger a custom event when modal opens
+        window.dispatchEvent(new CustomEvent('modalOpened', { detail: { modalId } }));
+    }
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+    }
 }
+
+// Make functions globally available
+window.openModal = openModal;
+window.closeModal = closeModal;
 
 // Close modals on outside click
 document.addEventListener('click', (e) => {

@@ -1722,8 +1722,10 @@ body {
 
 .chart-container canvas {
     flex: 1;
-    max-height: 300px;
-    min-height: 250px;
+    max-height: 400px;
+    min-height: 300px;
+    width: 100% !important;
+    height: auto !important;
 }
 
 .charts-content {

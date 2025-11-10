@@ -1,12 +1,12 @@
 // Service Worker para VendaNinja
-const CACHE_NAME = 'vendaninja-v2';
+const CACHE_NAME = 'vendaninja-v3';
 const CHART_JS_URL = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
 
 // List of files to cache
 const filesToCache = [
     './',
     './index.html',
-    './landing.html',
+    './pdv.html',
     './styles.css',
     './styles-landing.css',
     './script-db.js',
@@ -138,12 +138,12 @@ self.addEventListener('fetch', (event) => {
                         return response;
                     })
                     .catch(() => {
-                        // If offline and requesting a page, try to return index.html or landing.html
+                        // If offline and requesting a page, try to return index.html or pdv.html
                         if (event.request.destination === 'document') {
-                            if (url.pathname.includes('landing')) {
-                                return caches.match('./landing.html') || caches.match('./index.html');
+                            if (url.pathname.includes('pdv')) {
+                                return caches.match('./pdv.html') || caches.match('./index.html');
                             }
-                            return caches.match('./index.html') || caches.match('./landing.html');
+                            return caches.match('./index.html') || caches.match('./pdv.html');
                         }
                         // For other requests, try to return from cache or fail gracefully
                         return caches.match(event.request) || new Response('Offline', { 

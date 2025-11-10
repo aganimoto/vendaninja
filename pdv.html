@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="description" content="Sistema de Ponto de Venda (PDV) offline para pequenos negócios brasileiros - 100% funcional sem internet">
+    <meta name="keywords" content="PDV, ponto de venda, vendas, caixa, brasileiro, offline, PWA">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="VendaNinja">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>VendaNinja - PDV Offline</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="assets/icon-192.png">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Chart.js - Load before scripts for dashboard functionality -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" 
+            onload="console.log('✅ Chart.js carregado com sucesso'); window.ChartJSLoaded = true;"
+            onerror="console.error('❌ Erro ao carregar Chart.js'); window.ChartJSError = true;"></script>
+</head>
+<body>
+    <!-- Notification Toast -->
+    <div id="notification" class="notification" style="display: none;"></div>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <a href="./" class="logo-link">
+                    <img src="assets/logo-ninja.svg" alt="VendaNinja" class="logo">
+                    <h1>VendaNinja</h1>
+                </a>
+            </div>
+            <div class="header-actions">
+                <a href="./" class="btn-icon" aria-label="Voltar para landing" title="Voltar para página inicial">🏠</a>
+                <button class="btn-icon" id="cashRegisterBtn" aria-label="Caixa" title="Abrir/Fechar Caixa">
+                    <span id="cashRegisterIcon">💵</span>
+                </button>
+                <button class="btn-icon" id="themeToggle" aria-label="Alternar tema">
+                    <span id="themeIcon">🌙</span>
+                </button>
+                <button class="btn-icon" id="settingsBtn" aria-label="Configurações">⚙️</button>
+                <button class="btn-icon" id="chartsBtn" aria-label="Gráficos e Dashboards">📈</button>
+                <button class="btn-icon" id="reportsBtn" aria-label="Relatórios">📊</button>
+                <button class="btn-icon" id="promotionsBtn" aria-label="Promoções e Cupons">🏷️</button>
+                <button class="btn-icon" id="salesHistoryBtn" aria-label="Histórico de Vendas">📋</button>
+                <button class="btn-icon" id="backupBtn" aria-label="Backup">💾</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <!-- Product Search -->
+        <section class="search-section">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="productSearch" 
+                    class="search-input" 
+                    placeholder="Buscar produto por nome ou código... (Enter para adicionar)"
+                    autofocus
+                >
+                <button class="btn-primary" id="searchBtn">🔍 Buscar</button>
+            </div>
+        </section>
+
+        <!-- Quick Buttons -->
+        <section class="quick-buttons-section">
+            <h2>Produtos Rápidos</h2>
+            <div class="quick-buttons" id="quickButtons">
+                <!-- Quick buttons will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Cart -->
+        <section class="cart-section">
+            <h2>Carrinho</h2>
+            <div class="cart-container">
+                <div class="cart-items" id="cartItems">
+                    <p class="empty-cart">Carrinho vazio</p>
+                </div>
+                <div class="cart-totals">
+                    <div class="cart-total-item">
+                        <span>Subtotal:</span>
+                        <span id="cartSubtotal">R$ 0,00</span>
+                    </div>
+                    <div class="cart-total-item" id="couponDiscountRow" style="display: none;">
+                        <span>Desconto (Cupom):</span>
+                        <span id="cartCouponDiscount" style="color: var(--success);">-R$ 0,00</span>
+                    </div>
+                    <div class="cart-total-item">
+                        <span>Total:</span>
+                        <span id="cartTotal" class="cart-total-value">R$ 0,00</span>
+                    </div>
+                </div>
+                <div class="cart-actions">
+                    <div class="coupon-section" style="margin-bottom: 1rem;">
+                        <input 
+                            type="text" 
+                            id="couponCode" 
+                            class="form-input" 
+                            placeholder="Código do cupom"
+                            style="display: inline-block; width: calc(100% - 100px); margin-right: 0.5rem;"
+                        >
+                        <button class="btn-secondary" id="applyCouponBtn" style="width: 90px;">Aplicar</button>
+                        <div id="couponMessage" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
+                    </div>
+                    <button class="btn-primary btn-large" id="checkoutBtn">Finalizar Venda</button>
+                    <button class="btn-secondary" id="clearCartBtn">Limpar Carrinho</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Configurações</h2>
+                <button class="modal-close" id="closeSettings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="businessName">Nome do Negócio:</label>
+                    <input type="text" id="businessName" class="form-input" placeholder="Ex: Lanchonete do João">
+                </div>
+                <div class="form-group">
+                    <label for="currency">Moeda:</label>
+                    <input type="text" id="currency" class="form-input" placeholder="R$" value="R$">
+                </div>
+                <div class="form-group">
+                    <label for="taxRate">Taxa de Imposto (%):</label>
+                    <input type="number" id="taxRate" class="form-input" min="0" max="100" step="0.01" placeholder="0">
+                </div>
+                <div class="form-actions">
+                    <button class="btn-primary" id="saveSettings">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup/Restore Modal -->
+    <div class="modal" id="backupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Backup e Restore</h2>
+                <button class="modal-close" id="closeBackup">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="backup-section">
+                    <h3>Exportar Dados</h3>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+                        Exporte seus dados para fazer backup. Importe um arquivo JSON para restaurar.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Manager Modal -->
+    <div class="modal" id="productManagerModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Gerenciar Produtos</h2>
+                <button class="modal-close" id="closeProductManager">&times;</button>
+            </div>
+            <div class="modal-body">
+                <button class="btn-primary" id="addProductBtn">+ Adicionar Produto</button>
+                <div class="products-list" id="productsList">
+                    <!-- Products will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Form Modal -->
+    <div class="modal" id="productFormModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="productFormTitle">Adicionar Produto</h2>
+                <button class="modal-close" id="closeProductForm">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <input type="hidden" id="productId">
+                    <div class="form-group">
+                        <label for="productName">Nome:</label>
+                        <input type="text" id="productName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productPrice">Preço:</label>
+                        <input type="number" id="productPrice" class="form-input" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productCode">Código (Código de Barras/ISBN):</label>
+                        <input type="text" id="productCode" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="productCategory">Categoria:</label>
+                        <input type="text" id="productCategory" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="productCost">Custo (opcional, para cálculo de lucro):</label>
+                        <input type="number" id="productCost" class="form-input" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="productStock">Estoque (opcional):</label>
+                        <input type="number" id="productStock" class="form-input" min="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="productQuick">
+                            Produto Rápido (aparece nos botões rápidos)
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Salvar</button>
+                        <button type="button" class="btn-secondary" id="cancelProductForm">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Modal -->
+    <div class="modal" id="reportsModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Relatórios</h2>
+                <button class="modal-close" id="closeReports">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="reports-filters">
+                    <div class="quick-period-buttons">
+                        <button class="btn-period" data-period="today">📅 Hoje</button>
+                        <button class="btn-period" data-period="7days">📅 Últimos 7 dias</button>
+                        <button class="btn-period" data-period="30days">📅 Últimos 30 dias</button>
+                    </div>
+                    <div class="filter-group">
+                        <label for="reportDateStart">Data Inicial:</label>
+                        <input type="date" id="reportDateStart" class="form-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="reportDateEnd">Data Final:</label>
+                        <input type="date" id="reportDateEnd" class="form-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="reportPaymentMethod">Forma de Pagamento:</label>
+                        <select id="reportPaymentMethod" class="form-input">
+                            <option value="">Todas</option>
+                            <option value="dinheiro">Dinheiro</option>
+                            <option value="pix">Pix</option>
+                            <option value="credito">Crédito</option>
+                            <option value="debito">Débito</option>
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn-primary" id="generateReport">📊 Gerar Relatório</button>
+                        <button class="btn-secondary" id="exportCSV">📥 Exportar CSV</button>
+                    </div>
+                </div>
+                <div class="reports-content" id="reportsContent">
+                    <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                        Selecione um período e clique em "Gerar Relatório"
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales History Modal -->
+    <div class="modal" id="salesHistoryModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Histórico de Vendas</h2>
+                <button class="modal-close" id="closeSalesHistory">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="history-filters">
+                    <input type="date" id="historyDateFilter" class="form-input">
+                    <input type="text" id="historySearch" class="form-input" placeholder="Buscar por produto ou CPF...">
+                </div>
+                <div class="sales-history" id="salesHistory">
+                    <!-- Sales history will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Finalizar Venda</h2>
+                <button class="modal-close" id="closeCheckout">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="checkout-summary">
+                    <div class="checkout-item">
+                        <span>Total:</span>
+                        <span id="checkoutTotal">R$ 0,00</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="customerCPF">CPF do Cliente (opcional):</label>
+                    <input type="text" id="customerCPF" class="form-input" placeholder="000.000.000-00" maxlength="14">
+                </div>
+                <div class="form-group">
+                    <label for="paymentMethod">Forma de Pagamento:</label>
+                    <select id="paymentMethod" class="form-input">
+                        <option value="dinheiro" selected>Dinheiro</option>
+                        <option value="pix">Pix</option>
+                        <option value="credito">Crédito</option>
+                        <option value="debito">Débito</option>
+                    </select>
+                </div>
+                <div class="change-section" id="changeSection" style="display: block;">
+                    <div class="form-group">
+                        <label for="amountReceived">Valor Recebido:</label>
+                        <input type="number" id="amountReceived" class="form-input" min="0" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="change-amount" id="changeAmount" style="display: none;">
+                        <span>Troco:</span>
+                        <span id="changeValue">R$ 0,00</span>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-primary btn-large" id="confirmCheckout">Confirmar Venda</button>
+                    <button class="btn-secondary" id="cancelCheckout">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cash Register Modal -->
+    <div class="modal" id="cashRegisterModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="cashRegisterTitle">Abrir Caixa</h2>
+                <button class="modal-close" id="closeCashRegister">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Open Cash Content -->
+                <div id="openCashContent" style="display: block;">
+                    <div class="form-group">
+                        <label for="initialCash">Valor Inicial em Caixa:</label>
+                        <input type="number" id="initialCash" class="form-input" placeholder="0.00" min="0" step="0.01" value="0">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-primary" id="confirmOpenCash">🔓 Abrir Caixa</button>
+                        <button class="btn-secondary" id="cancelCashRegister">Cancelar</button>
+                    </div>
+                </div>
+                <!-- Close Cash Content -->
+                <div id="closeCashContent" style="display: none;">
+                    <div class="cash-stats">
+                        <div class="cash-stat">
+                            <span>Valor Inicial:</span>
+                            <span id="cashInitialAmount">R$ 0,00</span>
+                        </div>
+                        <div class="cash-stat">
+                            <span>Vendas em Dinheiro:</span>
+                            <span id="cashSalesAmount">R$ 0,00</span>
+                        </div>
+                        <div class="cash-stat">
+                            <span>Total Esperado:</span>
+                            <span id="cashExpectedAmount">R$ 0,00</span>
+                        </div>
+                        <div class="form-group" style="margin-top: 1rem;">
+                            <label for="finalCash">Valor Final em Caixa:</label>
+                            <input type="number" id="finalCash" class="form-input" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                        <div class="cash-stat" id="cashDifference" style="display: none;">
+                            <span>Diferença:</span>
+                            <span id="cashDifferenceAmount">R$ 0,00</span>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn-primary" id="confirmCloseCash">🔒 Fechar Caixa</button>
+                        <button class="btn-secondary" id="cancelCloseCash">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt (Hidden, printed) -->
+    <div class="receipt" id="receipt">
+        <div class="receipt-content" id="receiptContent">
+            <!-- Receipt will be generated here -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>VendaNinja - Sistema de PDV Offline</p>
+    </footer>
+
+    <!-- Audio element for sound feedback -->
+    <audio id="shurikenSound" preload="auto">
+        <source src="assets/shuriken.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="script-db.js"></script>
+    <script src="script.js"></script>
+    <script src="script-charts-coupons.js"></script>
+    <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js', { scope: './' })
+                    .then(reg => {
+                        console.log('Service Worker registrado com sucesso:', reg.scope);
+                        
+                        // Check for updates
+                        reg.addEventListener('updatefound', () => {
+                            const newWorker = reg.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('Nova versão do Service Worker disponível');
+                                    // Optionally show update notification to user
+                                }
+                            });
+                        });
+                    })
+                    .catch(err => {
+                        console.error('Erro ao registrar Service Worker:', err);
+                    });
+                
+                // Handle controller change (page refresh after update)
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    console.log('Service Worker atualizado, recarregando página...');
+                    window.location.reload();
+                });
+            });
+        }
+    </script>
+</body>
+</html>
+

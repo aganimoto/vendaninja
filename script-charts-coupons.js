@@ -26,91 +26,287 @@ if (typeof escapeHtml === 'undefined') {
 }
 
 function initializeCharts() {
+    console.log('=== initializeCharts() chamado ===');
+    console.log('Chart.js no window:', typeof window.Chart !== 'undefined');
+    console.log('Chart.js global:', typeof Chart !== 'undefined');
+    
+    // Check if Chart.js script tag exists
+    const chartScript = document.querySelector('script[src*="chart.js"]');
+    console.log('Script tag Chart.js encontrado:', !!chartScript);
+    
+    // Function to setup listeners
+    const setup = () => {
+        console.log('Configurando listeners de gráficos...');
+        setupChartListeners();
+    };
+    
+    // Check if Chart.js is already loaded
+    if (typeof Chart !== 'undefined' || typeof window.Chart !== 'undefined') {
+        console.log('✅ Chart.js já está disponível');
+        // Make Chart available globally if it's not
+        if (typeof Chart === 'undefined' && typeof window.Chart !== 'undefined') {
+            window.Chart = window.Chart;
+        }
+        setup();
+        return;
+    }
+    
     // Wait for Chart.js to be available
+    console.log('⏳ Aguardando Chart.js carregar...');
+    let attempts = 0;
+    const maxAttempts = 100; // 10 seconds max
+    
     const checkChartJS = setInterval(() => {
-        if (typeof Chart !== 'undefined') {
+        attempts++;
+        
+        // Check both global and window.Chart
+        const chartLoaded = typeof Chart !== 'undefined' || typeof window.Chart !== 'undefined';
+        
+        if (chartLoaded) {
+            console.log('✅ Chart.js carregado após', attempts * 100, 'ms');
             clearInterval(checkChartJS);
-            setupChartListeners();
+            
+            // Ensure Chart is globally available
+            if (typeof Chart === 'undefined' && typeof window.Chart !== 'undefined') {
+                window.Chart = window.Chart;
+            }
+            
+            setup();
+        } else if (attempts >= maxAttempts) {
+            console.error('❌ Chart.js não carregou após 10 segundos');
+            console.error('Verifique se o script está sendo carregado corretamente');
+            clearInterval(checkChartJS);
+            // Still setup listeners - they will show error message
+            setup();
         }
     }, 100);
-    
-    // Timeout after 5 seconds
-    setTimeout(() => {
-        clearInterval(checkChartJS);
-        if (typeof Chart === 'undefined') {
-            console.error('Chart.js não carregou após 5 segundos');
-        }
-    }, 5000);
 }
 
 function setupChartListeners() {
-    // Event listeners for charts modal
-    const chartsBtn = document.getElementById('chartsBtn');
-    if (chartsBtn) {
-        // Remove existing listeners to avoid duplicates
+    console.log('=== setupChartListeners() chamado ===');
+    
+    // Wait a bit to ensure all scripts are loaded
+    setTimeout(() => {
+        // Event listeners for charts modal
+        const chartsBtn = document.getElementById('chartsBtn');
+        if (!chartsBtn) {
+            console.error('❌ Botão chartsBtn não encontrado no DOM');
+            return;
+        }
+        
+        console.log('✅ Botão chartsBtn encontrado');
+        
+        // Remove any existing event listeners by cloning
         const newChartsBtn = chartsBtn.cloneNode(true);
         chartsBtn.parentNode.replaceChild(newChartsBtn, chartsBtn);
         
-        newChartsBtn.addEventListener('click', (e) => {
+        newChartsBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             
-            if (typeof openModal === 'function') {
+            console.log('📊 Botão de gráficos clicado!');
+            console.log('Chart.js:', typeof Chart !== 'undefined' ? '✅ Carregado' : '❌ Não carregado');
+            console.log('State:', typeof state !== 'undefined' ? '✅ Disponível' : '❌ Não disponível');
+            console.log('openModal:', typeof window.openModal === 'function' ? '✅ Disponível' : '❌ Não disponível');
+            console.log('openModal (direct):', typeof openModal === 'function' ? '✅ Disponível' : '❌ Não disponível');
+            
+            // Try multiple ways to open modal
+            let modalOpened = false;
+            if (typeof window.openModal === 'function') {
+                window.openModal('chartsModal');
+                modalOpened = true;
+            } else if (typeof openModal === 'function') {
                 openModal('chartsModal');
-                setChartPeriod('today');
-                // Wait for modal to be visible before generating charts
-                setTimeout(() => {
-                    if (typeof Chart !== 'undefined') {
-                        generateCharts();
-                    } else {
-                        console.error('Chart.js não está disponível');
-                        const chartsContent = document.querySelector('.charts-content');
-                        if (chartsContent) {
-                            chartsContent.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--danger);"><p>Erro: Chart.js não está carregado. Verifique sua conexão com a internet.</p></div>';
-                        }
-                    }
-                }, 350);
+                modalOpened = true;
             } else {
-                console.error('openModal não está definido');
+                // Direct DOM manipulation as fallback
+                const modal = document.getElementById('chartsModal');
+                if (modal) {
+                    modal.classList.add('active');
+                    modalOpened = true;
+                }
             }
-        });
-    } else {
-        console.error('Botão chartsBtn não encontrado');
-    }
+            
+            if (!modalOpened) {
+                console.error('❌ Não foi possível abrir o modal');
+                alert('Erro: Não foi possível abrir o modal de gráficos. Recarregue a página.');
+                return;
+            }
+            
+            console.log('✅ Modal aberto');
+            
+            // Set period
+            try {
+                setChartPeriod('today');
+            } catch (e) {
+                console.warn('Erro ao definir período:', e);
+            }
+            
+            // Generate charts after modal opens
+            const generateAfterOpen = () => {
+                const modal = document.getElementById('chartsModal');
+                const isVisible = modal && modal.classList.contains('active');
+                const chartJsLoaded = typeof Chart !== 'undefined' || typeof window.Chart !== 'undefined' || window.ChartJSLoaded === true;
+                const stateAvailable = typeof state !== 'undefined' && state && Array.isArray(state.sales);
+                
+                console.log('🔍 Verificando condições:', {
+                    modalExists: !!modal,
+                    isVisible,
+                    chartJsLoaded,
+                    stateAvailable,
+                    salesCount: stateAvailable ? state.sales.length : 'N/A',
+                    ChartType: typeof Chart,
+                    windowChartType: typeof window.Chart,
+                    ChartJSLoadedFlag: window.ChartJSLoaded
+                });
+                
+                if (!chartJsLoaded) {
+                    console.error('❌ Chart.js não carregado');
+                    console.error('Chart:', typeof Chart);
+                    console.error('window.Chart:', typeof window.Chart);
+                    console.error('ChartJSLoaded flag:', window.ChartJSLoaded);
+                    console.error('ChartJSError flag:', window.ChartJSError);
+                    
+                    const chartsContent = document.querySelector('.charts-content');
+                    if (chartsContent) {
+                        chartsContent.innerHTML = `
+                            <div style="padding: 2rem; text-align: center; color: var(--danger);">
+                                <p><strong>⚠️ Chart.js não está carregado</strong></p>
+                                <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+                                    Verifique sua conexão com a internet e recarregue a página.
+                                </p>
+                                <p style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                                    Se o problema persistir, verifique o console do navegador (F12).
+                                </p>
+                                <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                    Recarregar Página
+                                </button>
+                            </div>
+                        `;
+                    }
+                    return;
+                }
+                
+                if (!stateAvailable) {
+                    console.error('❌ State não disponível ou inválido');
+                    return;
+                }
+                
+                if (isVisible) {
+                    console.log('✅ Todas as condições atendidas, gerando gráficos...');
+                    // Use multiple delays to ensure everything is ready
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            try {
+                                generateCharts();
+                            } catch (error) {
+                                console.error('❌ Erro ao gerar gráficos:', error);
+                            }
+                        }, 200);
+                    });
+                } else {
+                    console.log('⏳ Modal ainda não está visível, tentando novamente...');
+                    setTimeout(generateAfterOpen, 100);
+                }
+            };
+            
+            // Start checking after modal opens
+            setTimeout(generateAfterOpen, 400);
+        }, 0);
+    }, 100);
     
+    // Setup close button
     const closeCharts = document.getElementById('closeCharts');
     if (closeCharts) {
         closeCharts.addEventListener('click', () => {
-            if (typeof closeModal === 'function') {
+            if (typeof window.closeModal === 'function') {
+                window.closeModal('chartsModal');
+            } else if (typeof closeModal === 'function') {
                 closeModal('chartsModal');
-            }
-        });
-    }
-    
-    const generateChartsBtn = document.getElementById('generateCharts');
-    if (generateChartsBtn) {
-        generateChartsBtn.addEventListener('click', () => {
-            if (typeof Chart !== 'undefined') {
-                generateCharts();
             } else {
-                alert('Erro: Chart.js não está carregado. Verifique sua conexão com a internet.');
-            }
-        });
-    }
-    
-    // Chart period buttons - use event delegation on modal
-    const chartsModal = document.getElementById('chartsModal');
-    if (chartsModal) {
-        chartsModal.addEventListener('click', (e) => {
-            if (e.target && e.target.dataset && e.target.dataset.chartPeriod) {
-                const period = e.target.dataset.chartPeriod;
-                setChartPeriod(period);
-                if (typeof Chart !== 'undefined') {
-                    generateCharts();
+                const modal = document.getElementById('chartsModal');
+                if (modal) {
+                    modal.classList.remove('active');
                 }
             }
         });
     }
+    
+    // Setup generate charts button
+    setTimeout(() => {
+        const generateChartsBtn = document.getElementById('generateCharts');
+        if (generateChartsBtn) {
+            // Remove existing listener if any by cloning
+            const newGenerateBtn = generateChartsBtn.cloneNode(true);
+            generateChartsBtn.parentNode.replaceChild(newGenerateBtn, generateChartsBtn);
+            
+            newGenerateBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('📊 Botão "Gerar Gráficos" clicado');
+                
+                const chartJsLoaded = typeof Chart !== 'undefined' || typeof window.Chart !== 'undefined';
+                console.log('Chart.js disponível:', chartJsLoaded);
+                
+                if (chartJsLoaded) {
+                    console.log('Gerando gráficos manualmente...');
+                    try {
+                        generateCharts();
+                    } catch (error) {
+                        console.error('Erro ao gerar gráficos:', error);
+                        alert('Erro ao gerar gráficos. Verifique o console para mais detalhes.');
+                    }
+                } else {
+                    console.error('Chart.js não está disponível');
+                    alert('Erro: Chart.js não está carregado. Verifique sua conexão com a internet e recarregue a página.');
+                }
+            });
+            console.log('✅ Botão "Gerar Gráficos" configurado');
+        } else {
+            console.warn('⚠️ Botão generateCharts não encontrado');
+        }
+    }, 200);
+    
+    // Chart period buttons - use event delegation on modal
+    setTimeout(() => {
+        const chartsModal = document.getElementById('chartsModal');
+        if (chartsModal) {
+            // Use event delegation for period buttons
+            chartsModal.addEventListener('click', function(e) {
+                const target = e.target;
+                if (target && target.dataset && target.dataset.chartPeriod) {
+                    const period = target.dataset.chartPeriod;
+                    console.log('Período selecionado:', period);
+                    try {
+                        setChartPeriod(period);
+                        const chartJsLoaded = typeof Chart !== 'undefined' || typeof window.Chart !== 'undefined';
+                        if (chartJsLoaded) {
+                            generateCharts();
+                        } else {
+                            console.error('Chart.js não disponível para gerar gráficos');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao definir período:', error);
+                    }
+                }
+            });
+            console.log('✅ Event delegation para botões de período configurado');
+        } else {
+            console.warn('⚠️ Modal chartsModal não encontrado para event delegation');
+        }
+    }, 200);
+    
+    // Also listen for modal opened event
+    window.addEventListener('modalOpened', function(e) {
+        if (e.detail && e.detail.modalId === 'chartsModal') {
+            console.log('📊 Modal de gráficos foi aberto via evento');
+            setTimeout(() => {
+                const chartJsLoaded = typeof Chart !== 'undefined' || typeof window.Chart !== 'undefined';
+                if (chartJsLoaded && typeof state !== 'undefined') {
+                    generateCharts();
+                }
+            }, 500);
+        }
+    });
 }
 
 function setChartPeriod(period) {
@@ -154,31 +350,79 @@ function setChartPeriod(period) {
 }
 
 function generateCharts() {
+    console.log('=== generateCharts() chamado ===');
+    
+    // Check if Chart.js is available
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js não está disponível');
+        const chartsContent = document.querySelector('.charts-content');
+        if (chartsContent) {
+            chartsContent.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--danger);"><p>⚠️ Chart.js não está carregado.</p><p style="font-size: 0.9rem; margin-top: 0.5rem;">Verifique sua conexão com a internet e recarregue a página.</p></div>';
+        }
+        return;
+    }
+    
+    console.log('Chart.js está disponível');
+    
+    // Check if state is available
+    if (typeof state === 'undefined' || !Array.isArray(state.sales)) {
+        console.error('State não está disponível ou sales não é um array');
+        console.log('State:', typeof state, state);
+        return;
+    }
+    
+    console.log('State disponível, vendas:', state.sales.length);
+    
+    // Check if modal is visible (but don't block if not - sometimes it's called before modal opens)
+    const modal = document.getElementById('chartsModal');
+    if (!modal) {
+        console.error('Modal chartsModal não encontrado');
+        return;
+    }
+    
+    const isVisible = modal.classList.contains('active');
+    console.log('Modal visível:', isVisible);
+    
+    // Continue even if modal is not visible yet - it might be opening
+    
     const chartDateStart = document.getElementById('chartDateStart')?.value || '';
     const chartDateEnd = document.getElementById('chartDateEnd')?.value || '';
     
-    let filteredSales = Array.isArray(state.sales) ? state.sales : [];
+    let filteredSales = Array.isArray(state.sales) ? [...state.sales] : [];
+    
+    console.log('Dados para gráficos:', {
+        totalSales: filteredSales.length,
+        dateStart: chartDateStart,
+        dateEnd: chartDateEnd
+    });
     
     // Filter by date range
     if (chartDateStart && chartDateEnd) {
         filteredSales = filteredSales.filter(sale => {
             if (!sale.date) return false;
-            const saleDate = new Date(sale.date);
-            const startDate = new Date(chartDateStart + 'T00:00:00');
-            const endDate = new Date(chartDateEnd + 'T23:59:59');
-            return saleDate >= startDate && saleDate <= endDate;
+            try {
+                const saleDate = new Date(sale.date);
+                const startDate = new Date(chartDateStart + 'T00:00:00');
+                const endDate = new Date(chartDateEnd + 'T23:59:59');
+                return saleDate >= startDate && saleDate <= endDate;
+            } catch (e) {
+                console.warn('Erro ao processar data da venda:', sale.date, e);
+                return false;
+            }
         });
     }
     
+    console.log('Vendas filtradas:', filteredSales.length);
+    
     // Calculate metrics
     const totalSales = filteredSales.length;
-    const totalRevenue = filteredSales.reduce((sum, sale) => sum + (sale.total || 0), 0);
+    const totalRevenue = filteredSales.reduce((sum, sale) => sum + (parseFloat(sale.total) || 0), 0);
     const avgTicket = totalSales > 0 ? totalRevenue / totalSales : 0;
     const totalProfit = filteredSales.reduce((sum, sale) => {
-        return sum + (sale.items || []).reduce((itemSum, item) => {
-            const product = state.products.find(p => p.id === item.id);
-            if (product && product.cost !== undefined) {
-                const itemProfit = (item.price - product.cost) * item.quantity;
+        return sum + ((sale.items || [])).reduce((itemSum, item) => {
+            const product = (state.products || []).find(p => p.id === item.id);
+            if (product && product.cost !== undefined && product.cost !== null) {
+                const itemProfit = (parseFloat(item.price) - parseFloat(product.cost)) * parseInt(item.quantity);
                 return itemSum + itemProfit;
             }
             return itemSum;
@@ -186,30 +430,42 @@ function generateCharts() {
     }, 0);
     
     // Update metrics
-    document.getElementById('metricTotalSales').textContent = totalSales;
-    document.getElementById('metricTotalRevenue').textContent = formatCurrency(totalRevenue);
-    document.getElementById('metricAvgTicket').textContent = formatCurrency(avgTicket);
-    document.getElementById('metricTotalProfit').textContent = formatCurrency(totalProfit);
+    const metricTotalSales = document.getElementById('metricTotalSales');
+    const metricTotalRevenue = document.getElementById('metricTotalRevenue');
+    const metricAvgTicket = document.getElementById('metricAvgTicket');
+    const metricTotalProfit = document.getElementById('metricTotalProfit');
     
-    // Generate charts
-    generateSalesChart(filteredSales);
-    generateProductsChart(filteredSales);
-    generatePaymentChart(filteredSales);
-    generateWeekdayChart(filteredSales);
+    if (metricTotalSales) metricTotalSales.textContent = totalSales;
+    if (metricTotalRevenue) metricTotalRevenue.textContent = formatCurrency(totalRevenue);
+    if (metricAvgTicket) metricAvgTicket.textContent = formatCurrency(avgTicket);
+    if (metricTotalProfit) metricTotalProfit.textContent = formatCurrency(totalProfit);
+    
+    // Generate charts - use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+        console.log('Iniciando geração de gráficos individuais...');
+        try {
+            generateSalesChart(filteredSales);
+            generateProductsChart(filteredSales);
+            generatePaymentChart(filteredSales);
+            generateWeekdayChart(filteredSales);
+            console.log('Todos os gráficos gerados com sucesso');
+        } catch (error) {
+            console.error('Erro ao gerar gráficos:', error);
+        }
+    });
 }
 
 function generateSalesChart(sales) {
-    const chartContainer = document.querySelector('#salesChart')?.parentElement;
-    const ctx = document.getElementById('salesChart');
+    console.log('Gerando gráfico de vendas, dados:', sales.length);
     
-    if (!ctx || !chartContainer) {
-        console.error('Elemento salesChart não encontrado');
+    const chartContainer = document.querySelector('#salesChart')?.parentElement;
+    if (!chartContainer) {
+        console.error('Container do gráfico salesChart não encontrado');
         return;
     }
     
     if (typeof Chart === 'undefined') {
-        console.error('Chart.js não está disponível');
-        chartContainer.innerHTML = '<h3>Vendas ao Longo do Tempo</h3><p style="text-align: center; padding: 2rem; color: var(--danger);">Erro: Chart.js não está carregado. Verifique sua conexão com a internet.</p>';
+        console.error('Chart.js não está disponível em generateSalesChart');
         return;
     }
     
@@ -217,21 +473,42 @@ function generateSalesChart(sales) {
     if (chartInstances.salesChart) {
         try {
             chartInstances.salesChart.destroy();
+            console.log('Gráfico anterior destruído');
         } catch (e) {
             console.warn('Erro ao destruir gráfico anterior:', e);
         }
         chartInstances.salesChart = null;
     }
     
-    // Ensure canvas exists
-    if (!chartContainer.querySelector('canvas#salesChart')) {
-        chartContainer.innerHTML = '<h3>Vendas ao Longo do Tempo</h3><canvas id="salesChart"></canvas>';
+    // Get or create canvas
+    let ctx = document.getElementById('salesChart');
+    if (!ctx) {
+        console.log('Canvas não encontrado, criando novo...');
+        // Find the container and create canvas
+        const heading = chartContainer.querySelector('h3');
+        if (heading) {
+            // Remove any existing content except heading
+            const existingCanvas = chartContainer.querySelector('canvas');
+            if (existingCanvas) {
+                existingCanvas.remove();
+            }
+            const canvas = document.createElement('canvas');
+            canvas.id = 'salesChart';
+            canvas.style.maxHeight = '300px';
+            chartContainer.appendChild(canvas);
+            ctx = canvas;
+        } else {
+            chartContainer.innerHTML = '<h3>Vendas ao Longo do Tempo</h3><canvas id="salesChart" style="max-height: 300px;"></canvas>';
+            ctx = document.getElementById('salesChart');
+        }
     }
-    const newCtx = document.getElementById('salesChart');
-    if (!newCtx) {
-        console.error('Não foi possível criar canvas');
+    
+    if (!ctx) {
+        console.error('Não foi possível criar/obter canvas salesChart');
         return;
     }
+    
+    console.log('Canvas encontrado/criado:', ctx);
     
     // Group sales by date
     const salesByDate = {};
@@ -267,7 +544,8 @@ function generateSalesChart(sales) {
     }
     
     try {
-        chartInstances.salesChart = new Chart(newCtx, {
+        console.log('Criando gráfico Chart.js com', labels.length, 'labels');
+        chartInstances.salesChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
@@ -277,7 +555,10 @@ function generateSalesChart(sales) {
                     borderColor: 'rgb(37, 99, 235)',
                     backgroundColor: 'rgba(37, 99, 235, 0.1)',
                     tension: 0.4,
-                    fill: true
+                    fill: true,
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
                 }]
             },
             options: {
@@ -313,36 +594,66 @@ function generateSalesChart(sales) {
                 }
             }
         });
+        console.log('✅ Gráfico de vendas criado com sucesso');
     } catch (error) {
-        console.error('Erro ao criar gráfico de vendas:', error);
-        chartContainer.innerHTML = '<h3>Vendas ao Longo do Tempo</h3><p style="text-align: center; padding: 2rem; color: var(--danger);">Erro ao gerar gráfico: ' + (error.message || 'Erro desconhecido') + '</p>';
+        console.error('❌ Erro ao criar gráfico de vendas:', error);
+        console.error('Stack trace:', error.stack);
+        const errorMsg = error.message || 'Erro desconhecido';
+        chartContainer.innerHTML = '<h3>Vendas ao Longo do Tempo</h3><p style="text-align: center; padding: 2rem; color: var(--danger);">Erro ao gerar gráfico: ' + errorMsg + '</p>';
     }
 }
 
 function generateProductsChart(sales) {
-    const chartContainer = document.querySelector('#productsChart').parentElement;
-    const ctx = document.getElementById('productsChart');
-    if (!ctx) {
-        console.error('Elemento productsChart não encontrado');
+    console.log('Gerando gráfico de produtos, dados:', sales.length);
+    
+    const chartContainer = document.querySelector('#productsChart')?.parentElement;
+    if (!chartContainer) {
+        console.error('Container do gráfico productsChart não encontrado');
         return;
     }
     
     if (typeof Chart === 'undefined') {
-        console.error('Chart.js não está disponível');
-        chartContainer.innerHTML = '<h3>Top 10 Produtos Mais Vendidos</h3><p style="text-align: center; padding: 2rem; color: var(--danger);">Erro: Chart.js não está carregado.</p>';
+        console.error('Chart.js não está disponível em generateProductsChart');
         return;
     }
     
     if (chartInstances.productsChart) {
-        chartInstances.productsChart.destroy();
+        try {
+            chartInstances.productsChart.destroy();
+            console.log('Gráfico de produtos anterior destruído');
+        } catch (e) {
+            console.warn('Erro ao destruir gráfico anterior:', e);
+        }
         chartInstances.productsChart = null;
     }
     
-    // Restore container if it was replaced
-    if (!chartContainer.querySelector('canvas#productsChart')) {
-        chartContainer.innerHTML = '<h3>Top 10 Produtos Mais Vendidos</h3><canvas id="productsChart"></canvas>';
+    // Get or create canvas
+    let ctx = document.getElementById('productsChart');
+    if (!ctx) {
+        console.log('Canvas productsChart não encontrado, criando novo...');
+        const heading = chartContainer.querySelector('h3');
+        if (heading) {
+            const existingCanvas = chartContainer.querySelector('canvas');
+            if (existingCanvas) {
+                existingCanvas.remove();
+            }
+            const canvas = document.createElement('canvas');
+            canvas.id = 'productsChart';
+            canvas.style.maxHeight = '300px';
+            chartContainer.appendChild(canvas);
+            ctx = canvas;
+        } else {
+            chartContainer.innerHTML = '<h3>Top 10 Produtos Mais Vendidos</h3><canvas id="productsChart" style="max-height: 300px;"></canvas>';
+            ctx = document.getElementById('productsChart');
+        }
     }
-    const newCtx = document.getElementById('productsChart');
+    
+    if (!ctx) {
+        console.error('Não foi possível criar/obter canvas productsChart');
+        return;
+    }
+    
+    console.log('Canvas productsChart encontrado/criado:', ctx);
     
     // Count products
     const productCounts = {};
@@ -373,7 +684,7 @@ function generateProductsChart(sales) {
     }
     
     try {
-        chartInstances.productsChart = new Chart(newCtx, {
+        chartInstances.productsChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
@@ -400,36 +711,64 @@ function generateProductsChart(sales) {
                 }
             }
         });
+        console.log('✅ Gráfico de produtos criado com sucesso');
     } catch (error) {
         console.error('Erro ao criar gráfico de produtos:', error);
-        chartContainer.innerHTML = '<h3>Top 10 Produtos Mais Vendidos</h3><p style="text-align: center; padding: 2rem; color: var(--danger);">Erro ao gerar gráfico. Tente novamente.</p>';
+        chartContainer.innerHTML = '<h3>Top 10 Produtos Mais Vendidos</h3><p style="text-align: center; padding: 2rem; color: var(--danger);">Erro ao gerar gráfico: ' + (error.message || 'Erro desconhecido') + '</p>';
     }
 }
 
 function generatePaymentChart(sales) {
-    const chartContainer = document.querySelector('#paymentChart').parentElement;
-    const ctx = document.getElementById('paymentChart');
-    if (!ctx) {
-        console.error('Elemento paymentChart não encontrado');
+    console.log('Gerando gráfico de pagamentos, dados:', sales.length);
+    
+    const chartContainer = document.querySelector('#paymentChart')?.parentElement;
+    if (!chartContainer) {
+        console.error('Container do gráfico paymentChart não encontrado');
         return;
     }
     
     if (typeof Chart === 'undefined') {
-        console.error('Chart.js não está disponível');
-        chartContainer.innerHTML = '<h3>Formas de Pagamento</h3><p style="text-align: center; padding: 2rem; color: var(--danger);">Erro: Chart.js não está carregado.</p>';
+        console.error('Chart.js não está disponível em generatePaymentChart');
         return;
     }
     
     if (chartInstances.paymentChart) {
-        chartInstances.paymentChart.destroy();
+        try {
+            chartInstances.paymentChart.destroy();
+            console.log('Gráfico de pagamentos anterior destruído');
+        } catch (e) {
+            console.warn('Erro ao destruir gráfico anterior:', e);
+        }
         chartInstances.paymentChart = null;
     }
     
-    // Restore container if it was replaced
-    if (!chartContainer.querySelector('canvas#paymentChart')) {
-        chartContainer.innerHTML = '<h3>Formas de Pagamento</h3><canvas id="paymentChart"></canvas>';
+    // Get or create canvas
+    let ctx = document.getElementById('paymentChart');
+    if (!ctx) {
+        console.log('Canvas paymentChart não encontrado, criando novo...');
+        const heading = chartContainer.querySelector('h3');
+        if (heading) {
+            const existingCanvas = chartContainer.querySelector('canvas');
+            if (existingCanvas) {
+                existingCanvas.remove();
+            }
+            const canvas = document.createElement('canvas');
+            canvas.id = 'paymentChart';
+            canvas.style.maxHeight = '300px';
+            chartContainer.appendChild(canvas);
+            ctx = canvas;
+        } else {
+            chartContainer.innerHTML = '<h3>Formas de Pagamento</h3><canvas id="paymentChart" style="max-height: 300px;"></canvas>';
+            ctx = document.getElementById('paymentChart');
+        }
     }
-    const newCtx = document.getElementById('paymentChart');
+    
+    if (!ctx) {
+        console.error('Não foi possível criar/obter canvas paymentChart');
+        return;
+    }
+    
+    console.log('Canvas paymentChart encontrado/criado:', ctx);
     
     const paymentMethods = {
         'dinheiro': 'Dinheiro',
@@ -463,7 +802,7 @@ function generatePaymentChart(sales) {
     }
     
     try {
-        chartInstances.paymentChart = new Chart(newCtx, {
+        chartInstances.paymentChart = new Chart(ctx, {
             type: 'pie',
             data: {
                 labels: labels,
@@ -479,40 +818,76 @@ function generatePaymentChart(sales) {
                 plugins: {
                     legend: {
                         position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed || context.raw || 0;
+                                return context.label + ': R$ ' + parseFloat(value).toFixed(2).replace('.', ',');
+                            }
+                        }
                     }
                 }
             }
         });
+        console.log('✅ Gráfico de pagamentos criado com sucesso');
     } catch (error) {
         console.error('Erro ao criar gráfico de pagamentos:', error);
-        chartContainer.innerHTML = '<h3>Formas de Pagamento</h3><p style="text-align: center; padding: 2rem; color: var(--danger);">Erro ao gerar gráfico. Tente novamente.</p>';
+        chartContainer.innerHTML = '<h3>Formas de Pagamento</h3><p style="text-align: center; padding: 2rem; color: var(--danger);">Erro ao gerar gráfico: ' + (error.message || 'Erro desconhecido') + '</p>';
     }
 }
 
 function generateWeekdayChart(sales) {
-    const chartContainer = document.querySelector('#weekdayChart').parentElement;
-    const ctx = document.getElementById('weekdayChart');
-    if (!ctx) {
-        console.error('Elemento weekdayChart não encontrado');
+    console.log('Gerando gráfico de dias da semana, dados:', sales.length);
+    
+    const chartContainer = document.querySelector('#weekdayChart')?.parentElement;
+    if (!chartContainer) {
+        console.error('Container do gráfico weekdayChart não encontrado');
         return;
     }
     
     if (typeof Chart === 'undefined') {
-        console.error('Chart.js não está disponível');
-        chartContainer.innerHTML = '<h3>Vendas por Dia da Semana</h3><p style="text-align: center; padding: 2rem; color: var(--danger);">Erro: Chart.js não está carregado.</p>';
+        console.error('Chart.js não está disponível em generateWeekdayChart');
         return;
     }
     
     if (chartInstances.weekdayChart) {
-        chartInstances.weekdayChart.destroy();
+        try {
+            chartInstances.weekdayChart.destroy();
+            console.log('Gráfico de dias da semana anterior destruído');
+        } catch (e) {
+            console.warn('Erro ao destruir gráfico anterior:', e);
+        }
         chartInstances.weekdayChart = null;
     }
     
-    // Restore container if it was replaced
-    if (!chartContainer.querySelector('canvas#weekdayChart')) {
-        chartContainer.innerHTML = '<h3>Vendas por Dia da Semana</h3><canvas id="weekdayChart"></canvas>';
+    // Get or create canvas
+    let ctx = document.getElementById('weekdayChart');
+    if (!ctx) {
+        console.log('Canvas weekdayChart não encontrado, criando novo...');
+        const heading = chartContainer.querySelector('h3');
+        if (heading) {
+            const existingCanvas = chartContainer.querySelector('canvas');
+            if (existingCanvas) {
+                existingCanvas.remove();
+            }
+            const canvas = document.createElement('canvas');
+            canvas.id = 'weekdayChart';
+            canvas.style.maxHeight = '300px';
+            chartContainer.appendChild(canvas);
+            ctx = canvas;
+        } else {
+            chartContainer.innerHTML = '<h3>Vendas por Dia da Semana</h3><canvas id="weekdayChart" style="max-height: 300px;"></canvas>';
+            ctx = document.getElementById('weekdayChart');
+        }
     }
-    const newCtx = document.getElementById('weekdayChart');
+    
+    if (!ctx) {
+        console.error('Não foi possível criar/obter canvas weekdayChart');
+        return;
+    }
+    
+    console.log('Canvas weekdayChart encontrado/criado:', ctx);
     
     const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     const weekdayCounts = [0, 0, 0, 0, 0, 0, 0];
@@ -524,33 +899,51 @@ function generateWeekdayChart(sales) {
         weekdayCounts[weekday] += sale.total || 0;
     });
     
-    chartInstances.weekdayChart = new Chart(newCtx, {
-        type: 'bar',
-        data: {
-            labels: weekdays,
-            datasets: [{
-                label: 'Receita (R$)',
-                data: weekdayCounts,
-                backgroundColor: 'rgba(16, 185, 129, 0.8)',
-                borderColor: 'rgb(16, 185, 129)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
+    try {
+        chartInstances.weekdayChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: weekdays,
+                datasets: [{
+                    label: 'Receita (R$)',
+                    data: weekdayCounts,
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: 'rgb(16, 185, 129)',
+                    borderWidth: 1
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Receita: R$ ' + context.parsed.y.toFixed(2).replace('.', ',');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toFixed(2).replace('.', ',');
+                            }
+                        }
+                    }
                 }
             }
-        }
-    });
+        });
+        console.log('✅ Gráfico de dias da semana criado com sucesso');
+    } catch (error) {
+        console.error('Erro ao criar gráfico de dias da semana:', error);
+        chartContainer.innerHTML = '<h3>Vendas por Dia da Semana</h3><p style="text-align: center; padding: 2rem; color: var(--danger);">Erro ao gerar gráfico: ' + (error.message || 'Erro desconhecido') + '</p>';
+    }
 }
 
 // ===== Coupons and Promotions =====

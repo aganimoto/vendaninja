@@ -28,7 +28,7 @@ if (-Not (Test-Path $PDV_PATH)) {
 # Lista de arquivos e pastas para copiar
 $FILES_TO_COPY = @(
     "index.html",
-    "landing.html",
+    "pdv.html",
     "styles.css",
     "styles-landing.css",
     "script.js",
@@ -38,10 +38,7 @@ $FILES_TO_COPY = @(
     "sw.js",
     "manifest.json",
     "README.md",
-    "SETUP.md",
     "LICENSE",
-    "MELHORIAS.md",
-    "DEPLOY_SUBDIR.md",
     "assets",
     "data"
 )

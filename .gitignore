@@ -1,25 +1,49 @@
-# OS files
-.DS_Store
-Thumbs.db
+# VendaNinja - Git Ignore
 
-# Editor files
+# Sistema operacional
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editores
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.classpath
+.settings/
 
 # Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Temporary files
+# Arquivos temporários
 *.tmp
 *.temp
+*.bak
+*.backup
 
-# Note: Assets should be committed
-# Uncomment if you don't want to commit large binary files
-# *.mp3
-# *.png
-# *.jpg
-# *.jpeg
+# Node (se usar no futuro)
+node_modules/
+package-lock.json
+yarn.lock
 
+# Build
+dist/
+build/
+
+# Arquivos de backup do sistema
+vendaninja-backup-*.json
+
+# Arquivos de ambiente
+.env
+.env.local

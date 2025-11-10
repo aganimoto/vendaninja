@@ -1361,29 +1361,35 @@ function handlePromotionSubmit(e) {
             endDate: document.getElementById('promotionEndDate').value,
             active: document.getElementById('promotionActive').checked
         };
+        
+        // Validate
+        if (promotion.startDate > promotion.endDate) {
+            alert('Data de início não pode ser maior que data de término');
+            return;
+        }
+        
         state.promotions[existingIndex] = promotion;
     } else {
         // Create new promotion
         promotion = {
             id: generateId(),
-        name: document.getElementById('promotionName').value.trim(),
-        type: document.getElementById('promotionType').value,
-        products: Array.from(document.getElementById('promotionProducts').selectedOptions).map(opt => opt.value),
-        discount: parseFloat(document.getElementById('promotionDiscount').value) || 0,
-        startDate: document.getElementById('promotionStartDate').value,
-        endDate: document.getElementById('promotionEndDate').value,
-        active: document.getElementById('promotionActive').checked,
-        createdAt: new Date().toISOString()
-    };
-    
-    // Validate
-    if (promotion.startDate > promotion.endDate) {
-        alert('Data de início não pode ser maior que data de término');
-        return;
-    }
-    
-    if (!state.promotions) state.promotions = [];
-    if (!editingId) {
+            name: document.getElementById('promotionName').value.trim(),
+            type: document.getElementById('promotionType').value,
+            products: Array.from(document.getElementById('promotionProducts').selectedOptions).map(opt => opt.value),
+            discount: parseFloat(document.getElementById('promotionDiscount').value) || 0,
+            startDate: document.getElementById('promotionStartDate').value,
+            endDate: document.getElementById('promotionEndDate').value,
+            active: document.getElementById('promotionActive').checked,
+            createdAt: new Date().toISOString()
+        };
+        
+        // Validate
+        if (promotion.startDate > promotion.endDate) {
+            alert('Data de início não pode ser maior que data de término');
+            return;
+        }
+        
+        if (!state.promotions) state.promotions = [];
         state.promotions.push(promotion);
     }
     

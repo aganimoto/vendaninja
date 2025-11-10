@@ -34,28 +34,93 @@
                 </a>
             </div>
             <div class="header-actions">
-                <a href="./" class="btn-icon" aria-label="Voltar para landing" title="Voltar para página inicial">🏠</a>
+                <a href="./" class="btn-icon" aria-label="Voltar para landing" title="Voltar para página inicial">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <span class="btn-icon-text">Início</span>
+                </a>
                 <button class="btn-icon" id="cashRegisterBtn" aria-label="Caixa" title="Abrir/Fechar Caixa">
-                    <span id="cashRegisterIcon">💵</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    <span class="btn-icon-text">Caixa</span>
                 </button>
                 <button class="btn-icon" id="themeToggle" aria-label="Alternar tema">
-                    <span id="themeIcon">🌙</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="themeIcon">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <span class="btn-icon-text">Tema</span>
                 </button>
-                <button class="btn-icon" id="settingsBtn" aria-label="Configurações">⚙️</button>
-                <button class="btn-icon" id="chartsBtn" aria-label="Gráficos e Dashboards">📈</button>
-                <button class="btn-icon" id="reportsBtn" aria-label="Relatórios">📊</button>
-                <button class="btn-icon" id="promotionsBtn" aria-label="Promoções e Cupons">🏷️</button>
-                <button class="btn-icon" id="salesHistoryBtn" aria-label="Histórico de Vendas">📋</button>
-                <button class="btn-icon" id="backupBtn" aria-label="Backup">💾</button>
+                <button class="btn-icon" id="settingsBtn" aria-label="Configurações">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3m15.364-6.364l-4.243 4.243m0-8.485l4.243 4.243M4.636 19.364l4.243-4.243m0-8.485L4.636 6.636"></path>
+                    </svg>
+                    <span class="btn-icon-text">Config</span>
+                </button>
+                <button class="btn-icon" id="productManagerBtn" aria-label="Inventário" title="Gerenciar Produtos">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    </svg>
+                    <span class="btn-icon-text">Inventário</span>
+                </button>
+                <a href="charts.html" class="btn-icon" aria-label="Gráficos e Dashboards" title="Gráficos e Dashboards">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span class="btn-icon-text">Gráficos</span>
+                </a>
+                <button class="btn-icon" id="reportsBtn" aria-label="Relatórios">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span class="btn-icon-text">Relatórios</span>
+                </button>
+                <button class="btn-icon" id="promotionsBtn" aria-label="Promoções e Cupons">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                        <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                    </svg>
+                    <span class="btn-icon-text">Cupons</span>
+                </button>
+                <button class="btn-icon" id="salesHistoryBtn" aria-label="Histórico de Vendas">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    <span class="btn-icon-text">Histórico</span>
+                </button>
+                <button class="btn-icon" id="backupBtn" aria-label="Backup">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span class="btn-icon-text">Backup</span>
+                </button>
             </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="main-container">
-        <!-- Product Search -->
-        <section class="search-section">
-            <div class="search-container">
+    <main class="pos">
+        <!-- Products Section -->
+        <section class="pos-products">
+            <!-- Product Search -->
+            <div class="pos-search">
                 <input 
                     type="text" 
                     id="productSearch" 
@@ -63,54 +128,55 @@
                     placeholder="Buscar produto por nome ou código... (Enter para adicionar)"
                     autofocus
                 >
-                <button class="btn-primary" id="searchBtn">🔍 Buscar</button>
+            </div>
+
+            <!-- Products List -->
+            <div class="pos-products-list" id="quickButtons">
+                <!-- Products will be loaded here -->
+            </div>
+
+            <!-- Categories (Fixed at bottom) -->
+            <div class="pos-categories" id="posCategories">
+                <!-- Categories will be loaded here -->
             </div>
         </section>
 
-        <!-- Quick Buttons -->
-        <section class="quick-buttons-section">
-            <h2>Produtos Rápidos</h2>
-            <div class="quick-buttons" id="quickButtons">
-                <!-- Quick buttons will be loaded here -->
+        <!-- Cart Section (Fixed on right) -->
+        <section class="pos-cart">
+            <div class="pos-cart-header">
+                <h2>Carrinho</h2>
+                <div class="pos-cart-time" id="cartTime"></div>
             </div>
-        </section>
-
-        <!-- Cart -->
-        <section class="cart-section">
-            <h2>Carrinho</h2>
-            <div class="cart-container">
-                <div class="cart-items" id="cartItems">
-                    <p class="empty-cart">Carrinho vazio</p>
+            <div class="pos-cart-items" id="cartItems">
+                <p class="empty-cart">Carrinho vazio</p>
+            </div>
+            <div class="pos-cart-coupons">
+                <input 
+                    type="text" 
+                    id="couponCode" 
+                    class="form-input" 
+                    placeholder="Código do cupom"
+                >
+                <button class="btn-secondary" id="applyCouponBtn">Aplicar</button>
+                <div id="couponMessage" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
+            </div>
+            <div class="pos-cart-totals">
+                <div class="cart-total-item">
+                    <span>Subtotal:</span>
+                    <span id="cartSubtotal">R$ 0,00</span>
                 </div>
-                <div class="cart-totals">
-                    <div class="cart-total-item">
-                        <span>Subtotal:</span>
-                        <span id="cartSubtotal">R$ 0,00</span>
-                    </div>
-                    <div class="cart-total-item" id="couponDiscountRow" style="display: none;">
-                        <span>Desconto (Cupom):</span>
-                        <span id="cartCouponDiscount" style="color: var(--success);">-R$ 0,00</span>
-                    </div>
-                    <div class="cart-total-item">
-                        <span>Total:</span>
-                        <span id="cartTotal" class="cart-total-value">R$ 0,00</span>
-                    </div>
+                <div class="cart-total-item" id="couponDiscountRow" style="display: none;">
+                    <span>Desconto (Cupom):</span>
+                    <span id="cartCouponDiscount" style="color: var(--success);">-R$ 0,00</span>
                 </div>
-                <div class="cart-actions">
-                    <div class="coupon-section" style="margin-bottom: 1rem;">
-                        <input 
-                            type="text" 
-                            id="couponCode" 
-                            class="form-input" 
-                            placeholder="Código do cupom"
-                            style="display: inline-block; width: calc(100% - 100px); margin-right: 0.5rem;"
-                        >
-                        <button class="btn-secondary" id="applyCouponBtn" style="width: 90px;">Aplicar</button>
-                        <div id="couponMessage" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
-                    </div>
-                    <button class="btn-primary btn-large" id="checkoutBtn">Finalizar Venda</button>
-                    <button class="btn-secondary" id="clearCartBtn">Limpar Carrinho</button>
+                <div class="cart-total-item">
+                    <span>Total:</span>
+                    <span id="cartTotal" class="cart-total-value">R$ 0,00</span>
                 </div>
+            </div>
+            <div class="pos-cart-actions">
+                <button class="btn-primary btn-large" id="checkoutBtn">Finalizar Venda</button>
+                <button class="btn-secondary" id="clearCartBtn">Limpar Carrinho</button>
             </div>
         </section>
     </main>
@@ -135,8 +201,30 @@
                     <label for="taxRate">Taxa de Imposto (%):</label>
                     <input type="number" id="taxRate" class="form-input" min="0" max="100" step="0.01" placeholder="0">
                 </div>
+                <div class="form-group">
+                    <label for="timezone">Fuso Horário (UTC):</label>
+                    <select id="timezone" class="form-input">
+                        <!-- Options will be generated by JavaScript -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="pixKeyType">Tipo de Chave PIX:</label>
+                    <select id="pixKeyType" class="form-input">
+                        <option value="">Nenhuma</option>
+                        <option value="chavealeatoria">Chave Aleatória</option>
+                        <option value="celular">Celular</option>
+                        <option value="cpf">CPF</option>
+                        <option value="email">E-mail</option>
+                    </select>
+                </div>
+                <div class="form-group" id="pixKeyValueGroup" style="display: none;">
+                    <label for="pixKeyValue" id="pixKeyValueLabel">Chave PIX:</label>
+                    <input type="text" id="pixKeyValue" class="form-input" placeholder="Digite a chave PIX">
+                    <small id="pixKeyHelp" style="display: none; color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem;"></small>
+                </div>
                 <div class="form-actions">
                     <button class="btn-primary" id="saveSettings">Salvar</button>
+                    <button class="btn-secondary" id="productManagerBtnSettings" onclick="document.getElementById('productManagerBtn').click();">Gerenciar Produtos</button>
                 </div>
             </div>
         </div>
@@ -305,8 +393,8 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="customerCPF">CPF do Cliente (opcional):</label>
-                    <input type="text" id="customerCPF" class="form-input" placeholder="000.000.000-00" maxlength="14">
+                    <label for="cpfInput">CPF do Cliente (opcional):</label>
+                    <input type="text" id="cpfInput" class="form-input" placeholder="000.000.000-00" maxlength="14">
                 </div>
                 <div class="form-group">
                     <label for="paymentMethod">Forma de Pagamento:</label>
@@ -319,10 +407,10 @@
                 </div>
                 <div class="change-section" id="changeSection" style="display: block;">
                     <div class="form-group">
-                        <label for="amountReceived">Valor Recebido:</label>
-                        <input type="number" id="amountReceived" class="form-input" min="0" step="0.01" placeholder="0.00">
+                        <label for="receivedAmount">Valor Recebido:</label>
+                        <input type="number" id="receivedAmount" class="form-input" min="0" step="0.01" placeholder="0.00">
                     </div>
-                    <div class="change-amount" id="changeAmount" style="display: none;">
+                    <div class="change-amount" id="changeDisplay" style="display: none;">
                         <span>Troco:</span>
                         <span id="changeValue">R$ 0,00</span>
                     </div>
@@ -661,4 +749,5 @@
     </script>
 </body>
 </html>
+
 

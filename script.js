@@ -9,7 +9,10 @@ const state = {
         currency: 'R$',
         taxRate: 0,
         theme: 'light',
-        storageType: 'localStorage' // 'localStorage' or 'indexedDB'
+        storageType: 'localStorage', // 'localStorage' or 'indexedDB'
+        timezone: null, // UTC offset (null = auto-detect from device)
+        pixKeyType: '', // 'chavealeatoria', 'celular', 'cpf', 'email'
+        pixKeyValue: '' // The actual PIX key value
     },
     cashRegister: {
         isOpen: false,
@@ -34,6 +37,16 @@ const STORES = {
     settings: 'settings'
 };
 
+// ===== Timezone Detection =====
+function getDeviceTimezone() {
+    // Get timezone offset in minutes
+    const offsetMinutes = new Date().getTimezoneOffset();
+    // Convert to hours (negative because getTimezoneOffset returns opposite sign)
+    const offsetHours = -offsetMinutes / 60;
+    // Round to nearest integer
+    return Math.round(offsetHours);
+}
+
 // ===== Initialization =====
 document.addEventListener('DOMContentLoaded', async () => {
     try {
@@ -55,12 +68,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('Produtos carregados:', state.products.length);
             console.log('Vendas carregadas:', state.sales.length);
             
+            // Auto-detect timezone if not set
+            if (!state.settings.timezone || state.settings.timezone === null || state.settings.timezone === undefined) {
+                const deviceTimezone = getDeviceTimezone();
+                state.settings.timezone = deviceTimezone;
+                saveData();
+                console.log('Timezone detectado automaticamente:', deviceTimezone);
+            }
+            
             renderQuickButtons();
+            renderCategories();
             updateCartDisplay();
             applyTheme();
+            setupTimezoneOptions();
             applySettings();
             focusSearch();
             updateCashRegisterButton();
+            updateCartTime();
             
             // Initialize payment method - show change section if payment is cash (default)
             const paymentMethod = document.getElementById('paymentMethod');
@@ -145,40 +169,84 @@ function getDefaultProducts() {
 
 // ===== Event Listeners =====
 function initializeEventListeners() {
-    // Search input
+    // Search input - only if element exists (not on charts.html)
     const searchInput = document.getElementById('productSearch');
-    searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleSearchAdd();
-        }
-    });
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSearchAdd();
+            }
+        });
+    }
 
     // Theme toggle
-    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
 
     // Settings modal
-    document.getElementById('settingsBtn').addEventListener('click', () => openModal('settingsModal'));
-    document.getElementById('closeSettings').addEventListener('click', () => closeModal('settingsModal'));
-    document.getElementById('saveSettings').addEventListener('click', saveSettings);
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            setupTimezoneOptions();
+            openModal('settingsModal');
+        });
+    }
+    const closeSettings = document.getElementById('closeSettings');
+    if (closeSettings) {
+        closeSettings.addEventListener('click', () => closeModal('settingsModal'));
+    }
+    const saveSettingsBtn = document.getElementById('saveSettings');
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', saveSettings);
+    }
+    
+    // PIX Key Type Change
+    const pixKeyTypeEl = document.getElementById('pixKeyType');
+    if (pixKeyTypeEl) {
+        pixKeyTypeEl.addEventListener('change', handlePixKeyTypeChange);
+    }
 
-    // Product manager modal
-    document.getElementById('productManagerBtn').addEventListener('click', () => {
-        openModal('productManagerModal');
-        renderProductsList();
-    });
-    document.getElementById('closeProductManager').addEventListener('click', () => closeModal('productManagerModal'));
-    document.getElementById('addProductBtn').addEventListener('click', () => {
-        document.getElementById('productFormTitle').textContent = 'Adicionar Produto';
-        document.getElementById('productForm').reset();
-        document.getElementById('productId').value = '';
-        openModal('productFormModal');
-    });
+    // Product manager modal - check if button exists (it might be in settings)
+    const productManagerBtn = document.getElementById('productManagerBtn');
+    if (productManagerBtn) {
+        productManagerBtn.addEventListener('click', () => {
+            openModal('productManagerModal');
+            renderProductsList();
+        });
+    }
+    const closeProductManager = document.getElementById('closeProductManager');
+    if (closeProductManager) {
+        closeProductManager.addEventListener('click', () => closeModal('productManagerModal'));
+    }
+    const addProductBtn = document.getElementById('addProductBtn');
+    if (addProductBtn) {
+        addProductBtn.addEventListener('click', () => {
+            const productFormTitle = document.getElementById('productFormTitle');
+            const productForm = document.getElementById('productForm');
+            const productId = document.getElementById('productId');
+            if (productFormTitle) productFormTitle.textContent = 'Adicionar Produto';
+            if (productForm) productForm.reset();
+            if (productId) productId.value = '';
+            openModal('productFormModal');
+        });
+    }
 
     // Product form modal
-    document.getElementById('closeProductForm').addEventListener('click', () => closeModal('productFormModal'));
-    document.getElementById('cancelProductForm').addEventListener('click', () => closeModal('productFormModal'));
-    document.getElementById('productForm').addEventListener('submit', handleProductSubmit);
+    const closeProductForm = document.getElementById('closeProductForm');
+    if (closeProductForm) {
+        closeProductForm.addEventListener('click', () => closeModal('productFormModal'));
+    }
+    const cancelProductForm = document.getElementById('cancelProductForm');
+    if (cancelProductForm) {
+        cancelProductForm.addEventListener('click', () => closeModal('productFormModal'));
+    }
+    const productForm = document.getElementById('productForm');
+    if (productForm) {
+        productForm.addEventListener('submit', handleProductSubmit);
+    }
 
     // Reports modal
     const reportsBtn = document.getElementById('reportsBtn');
@@ -204,13 +272,16 @@ function initializeEventListeners() {
         });
     }
     
-    // Quick period buttons
-    document.querySelectorAll('.btn-period').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const period = e.target.dataset.period;
-            setReportPeriod(period);
-            generateReport();
-        });
+    // Quick period buttons - use event delegation
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-period') || e.target.closest('.btn-period')) {
+            const btn = e.target.classList.contains('btn-period') ? e.target : e.target.closest('.btn-period');
+            const period = btn.dataset.period;
+            if (period) {
+                setReportPeriod(period);
+                generateReport();
+            }
+        }
     });
 
     // Cash Register
@@ -250,15 +321,79 @@ function initializeEventListeners() {
     }
 
     // Backup/Restore
-    document.getElementById('backupBtn').addEventListener('click', handleBackup);
-    document.getElementById('backupSettingsBtn').addEventListener('click', handleBackup);
-    document.getElementById('restoreSettingsBtn').addEventListener('click', handleRestore);
+    const backupBtn = document.getElementById('backupBtn');
+    if (backupBtn) {
+        backupBtn.addEventListener('click', handleBackup);
+    }
+    const backupSettingsBtn = document.getElementById('backupSettingsBtn');
+    if (backupSettingsBtn) {
+        backupSettingsBtn.addEventListener('click', handleBackup);
+    }
+    const restoreSettingsBtn = document.getElementById('restoreSettingsBtn');
+    if (restoreSettingsBtn) {
+        restoreSettingsBtn.addEventListener('click', handleRestore);
+    }
 
     // Storage type change
-    document.getElementById('storageType').addEventListener('change', handleStorageTypeChange);
+    const storageTypeEl = document.getElementById('storageType');
+    if (storageTypeEl) {
+        storageTypeEl.addEventListener('change', handleStorageTypeChange);
+    }
+    
+    // Clear cart button
+    const clearCartBtn = document.getElementById('clearCartBtn');
+    if (clearCartBtn) {
+        clearCartBtn.addEventListener('click', () => {
+            if (state.cart.length === 0) {
+                showNotification('Carrinho já está vazio!', 'info');
+                return;
+            }
+            if (confirm('Tem certeza que deseja limpar o carrinho?')) {
+                state.cart = [];
+                saveData();
+                updateCartDisplay();
+                showNotification('Carrinho limpo!', 'success');
+            }
+        });
+    }
+    
+    // Charts button - redirect to charts.html
+    const chartsBtn = document.getElementById('chartsBtn');
+    if (chartsBtn) {
+        chartsBtn.addEventListener('click', () => {
+            window.location.href = 'charts.html';
+        });
+    }
+    
+    // Promotions button - ensure it's set up
+    const promotionsBtn = document.getElementById('promotionsBtn');
+    if (promotionsBtn) {
+        promotionsBtn.addEventListener('click', () => {
+            openModal('promotionsModal');
+        });
+    }
 
     // Checkout
-    document.getElementById('checkoutBtn').addEventListener('click', handleCheckout);
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', handleCheckout);
+    }
+
+    // Checkout modal buttons
+    const confirmCheckoutBtn = document.getElementById('confirmCheckout');
+    if (confirmCheckoutBtn) {
+        confirmCheckoutBtn.addEventListener('click', confirmCheckout);
+    }
+
+    const cancelCheckoutBtn = document.getElementById('cancelCheckout');
+    if (cancelCheckoutBtn) {
+        cancelCheckoutBtn.addEventListener('click', cancelCheckout);
+    }
+
+    const closeCheckoutBtn = document.getElementById('closeCheckout');
+    if (closeCheckoutBtn) {
+        closeCheckoutBtn.addEventListener('click', cancelCheckout);
+    }
 
     // Payment method change
     const paymentMethodSelect = document.getElementById('paymentMethod');
@@ -274,10 +409,13 @@ function initializeEventListeners() {
     }
 
     // CPF input mask and validation
-    document.getElementById('cpfInput').addEventListener('input', (e) => {
-        maskCPF(e);
-        validateCPF(e);
-    });
+    const cpfInput = document.getElementById('cpfInput');
+    if (cpfInput) {
+        cpfInput.addEventListener('input', (e) => {
+            maskCPF(e);
+            validateCPF(e);
+        });
+    }
 
     // Sales history
     document.getElementById('salesHistoryBtn').addEventListener('click', () => {
@@ -415,18 +553,17 @@ function applyItemDiscount(productId, discount, discountType = 'percent') {
 // ===== Cart Display =====
 function updateCartDisplay() {
     const cartItems = document.getElementById('cartItems');
-    const cartFooter = document.getElementById('cartFooter');
-    const cartCount = document.getElementById('cartCount');
 
-    if (state.cart.length === 0) {
-        cartItems.innerHTML = '<p class="empty-cart">Carrinho vazio</p>';
-        cartFooter.style.display = 'none';
-        cartCount.textContent = '0';
+    if (!cartItems) {
+        console.log('Cart items element not found');
         return;
     }
 
-    cartFooter.style.display = 'block';
-    cartCount.textContent = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+    if (state.cart.length === 0) {
+        cartItems.innerHTML = '<p class="empty-cart">Carrinho vazio</p>';
+        updateCartTotals();
+        return;
+    }
 
     cartItems.innerHTML = state.cart.map(item => {
         const itemTotal = calculateItemTotal(item);
@@ -453,6 +590,20 @@ function updateCartDisplay() {
     }).join('');
 
     updateCartTotals();
+}
+
+// ===== Cart Time =====
+function updateCartTime() {
+    const cartTime = document.getElementById('cartTime');
+    if (!cartTime) return;
+    
+    function updateTime() {
+        const now = new Date();
+        cartTime.textContent = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    updateTime();
+    setInterval(updateTime, 1000);
 }
 
 function calculateItemTotal(item) {
@@ -496,47 +647,114 @@ function updateCartTotals() {
     
     const total = subtotal - totalDiscount - couponDiscount;
 
-    const subtotalEl = document.getElementById('subtotal');
-    const discountEl = document.getElementById('discount');
-    const totalEl = document.getElementById('total');
+    const subtotalEl = document.getElementById('cartSubtotal');
+    const couponDiscountEl = document.getElementById('cartCouponDiscount');
+    const couponDiscountRow = document.getElementById('couponDiscountRow');
+    const totalEl = document.getElementById('cartTotal');
+    const checkoutTotalEl = document.getElementById('checkoutTotal');
     
     if (subtotalEl) subtotalEl.textContent = formatCurrency(subtotal);
-    if (discountEl) discountEl.textContent = formatCurrency(totalDiscount + couponDiscount);
+    
+    if (couponDiscount > 0) {
+        if (couponDiscountEl) couponDiscountEl.textContent = '-' + formatCurrency(couponDiscount);
+        if (couponDiscountRow) couponDiscountRow.style.display = 'flex';
+    } else {
+        if (couponDiscountRow) couponDiscountRow.style.display = 'none';
+    }
+    
     if (totalEl) totalEl.textContent = formatCurrency(total);
+    if (checkoutTotalEl) checkoutTotalEl.textContent = formatCurrency(total);
 }
 
 // ===== Quick Buttons =====
+let currentCategoryFilter = null;
+
 function renderQuickButtons() {
-    const quickButtonsGrid = document.getElementById('quickButtonsGrid');
-    const quickButtonsSection = document.getElementById('quickButtonsSection');
+    const quickButtons = document.getElementById('quickButtons');
     
-    if (!quickButtonsGrid || !quickButtonsSection) {
-        console.log('Quick buttons elements not found');
+    if (!quickButtons) {
+        console.log('Quick buttons element not found');
         return;
     }
     
     if (!Array.isArray(state.products)) {
         console.log('Products array not available');
-        quickButtonsSection.style.display = 'none';
+        quickButtons.innerHTML = '<p class="empty-cart">Nenhum produto encontrado</p>';
         return;
     }
     
-    const quickProducts = state.products.filter(p => p && p.quick === true);
-    console.log('Produtos rápidos encontrados:', quickProducts.length);
+    // Por padrão, mostra apenas produtos rápidos
+    // Se uma categoria estiver selecionada, mostra todos os produtos da categoria
+    let productsToShow = [];
+    if (currentCategoryFilter) {
+        productsToShow = state.products.filter(p => p && p.category === currentCategoryFilter);
+    } else {
+        // Mostra apenas produtos com quick === true por padrão
+        productsToShow = state.products.filter(p => p && (p.quick === true || p.quick === 'true'));
+    }
+    
+    console.log('Total de produtos:', state.products.length);
+    console.log('Produtos rápidos:', state.products.filter(p => p && (p.quick === true || p.quick === 'true')).length);
+    console.log('Produtos a mostrar:', productsToShow.length);
 
-    if (quickProducts.length === 0) {
-        quickButtonsSection.style.display = 'none';
+    if (productsToShow.length === 0) {
+        quickButtons.innerHTML = '<p class="empty-cart">Nenhum produto encontrado. Adicione produtos nas configurações.</p>';
         return;
     }
 
-    quickButtonsSection.style.display = 'block';
-    quickButtonsGrid.innerHTML = quickProducts.map(product => `
+    quickButtons.innerHTML = productsToShow.map(product => `
         <button class="quick-btn" onclick="addToCart('${product.id}'); playSound();">
             <span class="quick-btn-name">${escapeHtml(product.name)}</span>
             <span class="quick-btn-price">${formatCurrency(product.price)}</span>
         </button>
     `).join('');
 }
+
+// ===== Categories =====
+function renderCategories() {
+    const posCategories = document.getElementById('posCategories');
+    
+    if (!posCategories) {
+        console.log('Categories element not found');
+        return;
+    }
+    
+    if (!Array.isArray(state.products)) {
+        posCategories.innerHTML = '';
+        return;
+    }
+    
+    // Extrair categorias únicas dos produtos
+    const categories = [...new Set(state.products
+        .filter(p => p && p.category)
+        .map(p => p.category)
+    )].sort();
+    
+    if (categories.length === 0) {
+        posCategories.innerHTML = '';
+        return;
+    }
+    
+    posCategories.innerHTML = `
+        <button class="category-btn ${currentCategoryFilter === null ? 'active' : ''}" onclick="filterByCategory(null)">
+            Todos
+        </button>
+        ${categories.map(category => `
+            <button class="category-btn ${currentCategoryFilter === category ? 'active' : ''}" onclick="filterByCategory('${escapeHtml(category)}')">
+                ${escapeHtml(category)}
+            </button>
+        `).join('')}
+    `;
+}
+
+function filterByCategory(category) {
+    currentCategoryFilter = category;
+    renderQuickButtons();
+    renderCategories();
+}
+
+// Make filterByCategory globally available
+window.filterByCategory = filterByCategory;
 
 // ===== Product Manager =====
 function renderProductsList() {
@@ -592,6 +810,7 @@ function deleteProduct(productId) {
     saveData();
     renderProductsList();
     renderQuickButtons();
+    renderCategories();
     updateCartDisplay();
 }
 
@@ -634,7 +853,7 @@ function generateId() {
 // ===== Checkout =====
 function handleCheckout() {
     if (state.cart.length === 0) {
-        alert('Carrinho vazio!');
+        showNotification('Carrinho vazio!', 'warning');
         return;
     }
 
@@ -643,15 +862,52 @@ function handleCheckout() {
         const product = state.products.find(p => p.id === item.id);
         if (product && product.stock !== undefined) {
             if (product.stock < item.quantity) {
-                alert(`Estoque insuficiente para ${product.name}! Disponível: ${product.stock}`);
+                showNotification(`Estoque insuficiente para ${product.name}! Disponível: ${product.stock}`, 'error');
                 return;
             }
         }
     }
 
-    const cpf = document.getElementById('cpfInput').value.trim();
-    const paymentMethod = document.getElementById('paymentMethod').value;
-    const receivedAmount = parseFloat(document.getElementById('receivedAmount').value) || 0;
+    // Update checkout total
+    const total = calculateCartTotal();
+    const checkoutTotalEl = document.getElementById('checkoutTotal');
+    if (checkoutTotalEl) {
+        checkoutTotalEl.textContent = formatCurrency(total);
+    }
+
+    // Reset form
+    const cpfInput = document.getElementById('cpfInput');
+    if (cpfInput) cpfInput.value = '';
+    
+    const paymentMethodSelect = document.getElementById('paymentMethod');
+    if (paymentMethodSelect) {
+        paymentMethodSelect.value = 'dinheiro';
+        handlePaymentMethodChange();
+    }
+    
+    const receivedAmountInput = document.getElementById('receivedAmount');
+    if (receivedAmountInput) receivedAmountInput.value = '';
+    
+    const changeDisplay = document.getElementById('changeDisplay');
+    if (changeDisplay) changeDisplay.style.display = 'none';
+
+    // Open modal
+    openModal('checkoutModal');
+}
+
+function confirmCheckout() {
+    const cpfInput = document.getElementById('cpfInput');
+    const paymentMethodSelect = document.getElementById('paymentMethod');
+    const receivedAmountInput = document.getElementById('receivedAmount');
+    
+    if (!cpfInput || !paymentMethodSelect || !receivedAmountInput) {
+        showNotification('Erro ao processar checkout. Elementos não encontrados.', 'error');
+        return;
+    }
+
+    const cpf = cpfInput.value.trim();
+    const paymentMethod = paymentMethodSelect.value;
+    const receivedAmount = parseFloat(receivedAmountInput.value) || 0;
     
     // Calculate totals with coupon
     const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -683,9 +939,15 @@ function handleCheckout() {
     const total = subtotal - itemDiscount - couponDiscount;
     
     // Validate payment for cash
-    if (paymentMethod === 'dinheiro' && receivedAmount < total) {
-        alert(`Valor recebido (${formatCurrency(receivedAmount)}) é menor que o total (${formatCurrency(total)}).`);
-        return;
+    if (paymentMethod === 'dinheiro') {
+        if (receivedAmount <= 0) {
+            showNotification('Por favor, informe o valor recebido.', 'warning');
+            return;
+        }
+        if (receivedAmount < total) {
+            showNotification(`Valor recebido (${formatCurrency(receivedAmount)}) é menor que o total (${formatCurrency(total)}).`, 'error');
+            return;
+        }
     }
 
     const sale = {
@@ -733,13 +995,13 @@ function handleCheckout() {
     // Clear cart and form
     state.cart = [];
     state.appliedCoupon = null;
-    document.getElementById('cpfInput').value = '';
-    const paymentMethodSelect = document.getElementById('paymentMethod');
-    if (paymentMethodSelect) paymentMethodSelect.value = 'dinheiro';
-    const receivedAmountInput = document.getElementById('receivedAmount');
-    if (receivedAmountInput) receivedAmountInput.value = '';
+    cpfInput.value = '';
+    paymentMethodSelect.value = 'dinheiro';
+    receivedAmountInput.value = '';
+    
     const changeSection = document.getElementById('changeSection');
-    if (changeSection) changeSection.style.display = 'none';
+    if (changeSection) changeSection.style.display = 'block';
+    
     const changeDisplay = document.getElementById('changeDisplay');
     if (changeDisplay) changeDisplay.style.display = 'none';
     
@@ -751,11 +1013,16 @@ function handleCheckout() {
 
     saveData();
     updateCartDisplay();
+    closeModal('checkoutModal');
     generateReceipt(sale);
     playSound();
     
     // Show success notification
     showNotification('Venda finalizada com sucesso!', 'success');
+}
+
+function cancelCheckout() {
+    closeModal('checkoutModal');
 }
 
 function calculateCartTotal() {
@@ -922,14 +1189,14 @@ function calculateChange() {
     }
     
     const receivedAmount = parseFloat(receivedAmountInput.value) || 0;
-    const total = calculateCartTotal();
+    const total = calculateCartTotal(); // Já considera cupons e descontos
     const change = receivedAmount - total;
     
     if (receivedAmount > 0) {
         changeDisplay.style.display = 'flex';
-        changeValue.textContent = formatCurrency(Math.abs(change));
         if (change >= 0) {
             changeValue.style.color = 'var(--success)';
+            changeValue.textContent = formatCurrency(change);
         } else {
             changeValue.style.color = 'var(--danger)';
             changeValue.textContent = 'Faltam: ' + formatCurrency(Math.abs(change));
@@ -1453,6 +1720,45 @@ function saveSettings() {
     state.settings.businessName = document.getElementById('businessName').value.trim() || 'VendaNinja';
     state.settings.currency = document.getElementById('currency').value.trim() || 'R$';
     state.settings.taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+    
+    // Timezone
+    const timezoneEl = document.getElementById('timezone');
+    if (timezoneEl) {
+        const selectedTimezone = parseInt(timezoneEl.value);
+        if (!isNaN(selectedTimezone)) {
+            state.settings.timezone = selectedTimezone;
+        } else {
+            // Fallback to device timezone if invalid
+            state.settings.timezone = getDeviceTimezone();
+        }
+    }
+    
+    // PIX Key
+    const pixKeyTypeEl = document.getElementById('pixKeyType');
+    const pixKeyValueEl = document.getElementById('pixKeyValue');
+    
+    if (pixKeyTypeEl && pixKeyValueEl) {
+        const pixKeyType = pixKeyTypeEl.value;
+        const pixKeyValue = pixKeyValueEl.value.trim();
+        
+        if (pixKeyType && pixKeyValue) {
+            // Validate PIX key based on type
+            if (validatePixKey(pixKeyType, pixKeyValue)) {
+                state.settings.pixKeyType = pixKeyType;
+                state.settings.pixKeyValue = pixKeyValue;
+            } else {
+                showNotification('Chave PIX inválida! Verifique o formato.', 'error');
+                return;
+            }
+        } else if (pixKeyType && !pixKeyValue) {
+            showNotification('Por favor, informe a chave PIX.', 'warning');
+            return;
+        } else {
+            state.settings.pixKeyType = '';
+            state.settings.pixKeyValue = '';
+        }
+    }
+    
     // Storage type is handled separately by handleStorageTypeChange
 
     saveData();
@@ -1466,11 +1772,170 @@ function applySettings() {
     const currencyEl = document.getElementById('currency');
     const taxRateEl = document.getElementById('taxRate');
     const storageTypeEl = document.getElementById('storageType');
+    const timezoneEl = document.getElementById('timezone');
+    const pixKeyTypeEl = document.getElementById('pixKeyType');
+    const pixKeyValueEl = document.getElementById('pixKeyValue');
     
     if (businessNameEl) businessNameEl.value = state.settings.businessName;
     if (currencyEl) currencyEl.value = state.settings.currency;
     if (taxRateEl) taxRateEl.value = state.settings.taxRate;
     if (storageTypeEl) storageTypeEl.value = state.settings.storageType || 'localStorage';
+    
+    // Timezone - auto-detect if not set
+    if (timezoneEl) {
+        if (!state.settings.timezone || state.settings.timezone === null || state.settings.timezone === undefined) {
+            const deviceTimezone = getDeviceTimezone();
+            state.settings.timezone = deviceTimezone;
+            saveData();
+        }
+        timezoneEl.value = state.settings.timezone;
+    }
+    
+    // PIX Key
+    if (pixKeyTypeEl) {
+        pixKeyTypeEl.value = state.settings.pixKeyType || '';
+        handlePixKeyTypeChange();
+    }
+    if (pixKeyValueEl) {
+        pixKeyValueEl.value = state.settings.pixKeyValue || '';
+    }
+}
+
+// ===== Timezone Setup =====
+function setupTimezoneOptions() {
+    const timezoneEl = document.getElementById('timezone');
+    if (!timezoneEl) return;
+    
+    // Get device timezone if not set
+    if (!state.settings.timezone || state.settings.timezone === undefined) {
+        const deviceTimezone = getDeviceTimezone();
+        state.settings.timezone = deviceTimezone;
+        saveData();
+    }
+    
+    // Generate UTC options from -12 to +12
+    let options = '';
+    const deviceTimezone = getDeviceTimezone();
+    
+    for (let i = -12; i <= 12; i++) {
+        const sign = i >= 0 ? '+' : '';
+        const label = `UTC${sign}${i}`;
+        // Mark device timezone
+        const isDevice = i === deviceTimezone;
+        const isSelected = i === state.settings.timezone;
+        const selected = isSelected ? ' selected' : '';
+        const deviceLabel = isDevice ? ` (Dispositivo)` : '';
+        options += `<option value="${i}"${selected}>${label}${deviceLabel}</option>`;
+    }
+    
+    timezoneEl.innerHTML = options;
+}
+
+// ===== PIX Key Management =====
+function handlePixKeyTypeChange() {
+    const pixKeyTypeEl = document.getElementById('pixKeyType');
+    const pixKeyValueGroup = document.getElementById('pixKeyValueGroup');
+    const pixKeyValueLabel = document.getElementById('pixKeyValueLabel');
+    const pixKeyValueEl = document.getElementById('pixKeyValue');
+    const pixKeyHelp = document.getElementById('pixKeyHelp');
+    
+    if (!pixKeyTypeEl || !pixKeyValueGroup || !pixKeyValueLabel || !pixKeyValueEl) return;
+    
+    const pixKeyType = pixKeyTypeEl.value;
+    
+    if (!pixKeyType) {
+        pixKeyValueGroup.style.display = 'none';
+        pixKeyValueEl.value = '';
+        if (pixKeyHelp) pixKeyHelp.style.display = 'none';
+        return;
+    }
+    
+    pixKeyValueGroup.style.display = 'block';
+    
+    // Set label and placeholder based on type
+    const labels = {
+        'chavealeatoria': 'Chave Aleatória PIX (UUID)',
+        'celular': 'Celular (com DDD)',
+        'cpf': 'CPF',
+        'email': 'E-mail'
+    };
+    
+    const placeholders = {
+        'chavealeatoria': 'Ex: 123e4567-e89b-12d3-a456-426614174000',
+        'celular': 'Ex: 11987654321',
+        'cpf': 'Ex: 123.456.789-00',
+        'email': 'Ex: exemplo@email.com'
+    };
+    
+    const helpTexts = {
+        'chavealeatoria': 'Formato: UUID (36 caracteres com hífens)',
+        'celular': 'Formato: DDD + número (11 dígitos, apenas números)',
+        'cpf': 'Formato: 000.000.000-00',
+        'email': 'Formato: exemplo@dominio.com'
+    };
+    
+    pixKeyValueLabel.textContent = labels[pixKeyType] || 'Chave PIX:';
+    pixKeyValueEl.placeholder = placeholders[pixKeyType] || 'Digite a chave PIX';
+    
+    if (pixKeyHelp) {
+        pixKeyHelp.textContent = helpTexts[pixKeyType] || '';
+        pixKeyHelp.style.display = helpTexts[pixKeyType] ? 'block' : 'none';
+    }
+    
+    // Clear existing masks and add new one based on type
+    // We'll handle masking in a single event listener that checks the type
+    pixKeyValueEl.oninput = function(e) {
+        const currentType = pixKeyTypeEl.value;
+        if (currentType === 'cpf') {
+            maskCPF(e);
+        } else if (currentType === 'celular') {
+            maskPhone(e);
+        }
+    };
+}
+
+function validatePixKey(type, value) {
+    if (!type || !value) return false;
+    
+    switch (type) {
+        case 'chavealeatoria':
+            // UUID format: 8-4-4-4-12 characters
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            return uuidRegex.test(value);
+            
+        case 'celular':
+            // Phone: DDD (2 digits) + number (9 digits) = 11 digits total
+            const phoneDigits = value.replace(/\D/g, '');
+            return phoneDigits.length === 11;
+            
+        case 'cpf':
+            // CPF validation
+            const cpf = value.replace(/\D/g, '');
+            return cpf.length === 11 && isValidCPF(cpf);
+            
+        case 'email':
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(value);
+            
+        default:
+            return false;
+    }
+}
+
+function maskPhone(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 11) {
+        if (value.length > 2) {
+            value = value.replace(/(\d{2})(\d)/, '($1) $2');
+        }
+        if (value.length > 10) {
+            value = value.replace(/(\d{2})(\d{5})(\d)/, '($1) $2-$3');
+        }
+        e.target.value = value;
+    } else {
+        e.target.value = value.substring(0, 11).replace(/(\d{2})(\d{5})(\d)/, '($1) $2-$3');
+    }
 }
 
 // ===== Theme =====
@@ -1480,7 +1945,6 @@ function toggleTheme() {
     state.settings.theme = newTheme;
     
     document.documentElement.setAttribute('data-theme', newTheme);
-    document.getElementById('themeIcon').textContent = newTheme === 'light' ? '🌙' : '☀️';
     
     saveData();
 }
@@ -1488,7 +1952,6 @@ function toggleTheme() {
 function applyTheme() {
     const theme = state.settings.theme || 'light';
     document.documentElement.setAttribute('data-theme', theme);
-    document.getElementById('themeIcon').textContent = theme === 'light' ? '🌙' : '☀️';
 }
 
 // ===== Backup/Restore =====
@@ -1761,16 +2224,13 @@ function handleCloseCash() {
 
 function updateCashRegisterButton() {
     const btn = document.getElementById('cashRegisterBtn');
-    const icon = document.getElementById('cashRegisterIcon');
     
-    if (!btn || !icon) return;
+    if (!btn) return;
     
     if (state.cashRegister.isOpen) {
-        icon.textContent = '💰';
         btn.title = 'Caixa Aberto - Clique para fechar';
-        btn.style.backgroundColor = 'var(--success)';
+        btn.style.backgroundColor = 'rgba(16, 185, 129, 0.3)';
     } else {
-        icon.textContent = '💵';
         btn.title = 'Caixa Fechado - Clique para abrir';
         btn.style.backgroundColor = '';
     }
@@ -1784,4 +2244,5 @@ window.editProduct = editProduct;
 window.deleteProduct = deleteProduct;
 window.playSound = playSound;
 window.viewSaleDetails = viewSaleDetails;
+
 

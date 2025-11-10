@@ -310,11 +310,21 @@ function setupChartListeners() {
 }
 
 function setChartPeriod(period) {
+    // Make sure function is available on window
+    if (!window.setChartPeriod) {
+        window.setChartPeriod = setChartPeriod;
+    }
+    
     const chartDateStart = document.getElementById('chartDateStart');
     const chartDateEnd = document.getElementById('chartDateEnd');
     const today = new Date();
     
-    if (!chartDateStart || !chartDateEnd) return;
+    if (!chartDateStart || !chartDateEnd) {
+        console.error('chartDateStart or chartDateEnd not found');
+        return;
+    }
+    
+    console.log('setChartPeriod called with period:', period);
     
     switch(period) {
         case 'today':
@@ -338,19 +348,59 @@ function setChartPeriod(period) {
             chartDateStart.value = '';
             chartDateEnd.value = '';
             break;
+        default:
+            console.warn('Unknown period:', period);
+            return;
     }
     
-    // Update button states
-    document.querySelectorAll('[data-chart-period]').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.dataset.chartPeriod === period) {
-            btn.classList.add('active');
-        }
+    console.log('Dates set:', {
+        start: chartDateStart.value,
+        end: chartDateEnd.value
     });
+    
+    // Update button states - only update buttons in quick-period-buttons container
+    const quickPeriodButtons = document.querySelector('.quick-period-buttons');
+    if (quickPeriodButtons) {
+        quickPeriodButtons.querySelectorAll('.btn-period').forEach(btn => {
+            btn.classList.remove('active');
+            const btnPeriod = btn.dataset.period || btn.dataset.chartPeriod;
+            if (btnPeriod === period) {
+                btn.classList.add('active');
+            }
+        });
+    }
+    
+    // Generate charts after period change - force immediate update
+    console.log('Tentando chamar generateCharts...');
+    const generateChartsFn = window.generateCharts || generateCharts;
+    
+    if (typeof generateChartsFn === 'function') {
+        console.log('generateCharts encontrada, chamando...');
+        // Use a small delay to ensure DOM is updated
+        setTimeout(() => {
+            try {
+                generateChartsFn();
+                console.log('generateCharts chamada com sucesso');
+            } catch (error) {
+                console.error('Erro ao chamar generateCharts:', error);
+            }
+        }, 150);
+    } else {
+        console.error('generateCharts function not found');
+        console.log('Available functions:', {
+            generateCharts: typeof generateCharts,
+            windowGenerateCharts: typeof window.generateCharts
+        });
+    }
 }
 
 function generateCharts() {
     console.log('=== generateCharts() chamado ===');
+    
+    // Make sure function is available on window (only if not already set)
+    if (typeof window.generateCharts !== 'function') {
+        window.generateCharts = generateCharts;
+    }
     
     // Check if Chart.js is available
     if (typeof Chart === 'undefined') {
@@ -373,43 +423,95 @@ function generateCharts() {
     
     console.log('State disponível, vendas:', state.sales.length);
     
-    // Check if modal is visible (but don't block if not - sometimes it's called before modal opens)
+    // Check if we're on charts.html page (not in a modal)
+    const isChartsPage = window.location.pathname.includes('charts.html') || document.querySelector('.charts-main');
     const modal = document.getElementById('chartsModal');
-    if (!modal) {
-        console.error('Modal chartsModal não encontrado');
-        return;
+    
+    // If modal exists, check if it's visible (for pdv.html)
+    if (modal && !isChartsPage) {
+        const isVisible = modal.classList.contains('active');
+        console.log('Modal visível:', isVisible);
+        if (!isVisible) {
+            console.log('Modal não está visível, mas continuando...');
+        }
+    } else if (isChartsPage) {
+        console.log('Página charts.html detectada, gerando gráficos diretamente');
     }
     
-    const isVisible = modal.classList.contains('active');
-    console.log('Modal visível:', isVisible);
+    const chartDateStartEl = document.getElementById('chartDateStart');
+    const chartDateEndEl = document.getElementById('chartDateEnd');
     
-    // Continue even if modal is not visible yet - it might be opening
+    if (!chartDateStartEl || !chartDateEndEl) {
+        console.error('Campos de data não encontrados:', {
+            chartDateStart: !!chartDateStartEl,
+            chartDateEnd: !!chartDateEndEl
+        });
+    }
     
-    const chartDateStart = document.getElementById('chartDateStart')?.value || '';
-    const chartDateEnd = document.getElementById('chartDateEnd')?.value || '';
+    const chartDateStart = chartDateStartEl ? chartDateStartEl.value : '';
+    const chartDateEnd = chartDateEndEl ? chartDateEndEl.value : '';
     
     let filteredSales = Array.isArray(state.sales) ? [...state.sales] : [];
     
     console.log('Dados para gráficos:', {
         totalSales: filteredSales.length,
         dateStart: chartDateStart,
-        dateEnd: chartDateEnd
+        dateEnd: chartDateEnd,
+        dateStartEl: chartDateStartEl ? 'encontrado' : 'não encontrado',
+        dateEndEl: chartDateEndEl ? 'encontrado' : 'não encontrado'
     });
     
-    // Filter by date range
-    if (chartDateStart && chartDateEnd) {
-        filteredSales = filteredSales.filter(sale => {
-            if (!sale.date) return false;
-            try {
+    // Filter by date range - same logic as generateReport
+    if (chartDateStart || chartDateEnd) {
+        if (chartDateStart && chartDateEnd) {
+            const startDate = new Date(chartDateStart + 'T00:00:00');
+            const endDate = new Date(chartDateEnd + 'T23:59:59');
+            filteredSales = filteredSales.filter(sale => {
+                if (!sale.date) return false;
                 const saleDate = new Date(sale.date);
-                const startDate = new Date(chartDateStart + 'T00:00:00');
-                const endDate = new Date(chartDateEnd + 'T23:59:59');
                 return saleDate >= startDate && saleDate <= endDate;
-            } catch (e) {
-                console.warn('Erro ao processar data da venda:', sale.date, e);
-                return false;
+            });
+        } else if (chartDateStart) {
+            const startDate = new Date(chartDateStart + 'T00:00:00');
+            filteredSales = filteredSales.filter(sale => {
+                if (!sale.date) return false;
+                const saleDate = new Date(sale.date);
+                return saleDate >= startDate;
+            });
+        } else if (chartDateEnd) {
+            const endDate = new Date(chartDateEnd + 'T23:59:59');
+            filteredSales = filteredSales.filter(sale => {
+                if (!sale.date) return false;
+                const saleDate = new Date(sale.date);
+                return saleDate <= endDate;
+            });
+        }
+    } else {
+        // Default to today - same as generateReport
+        // Always use today as default for charts.html
+        const isChartsPage = window.location.pathname.includes('charts.html') || document.querySelector('.charts-main');
+        if (isChartsPage) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            filteredSales = filteredSales.filter(sale => {
+                if (!sale.date) return false;
+                const saleDate = new Date(sale.date);
+                return saleDate >= today && saleDate < tomorrow;
+            });
+            console.log('Usando filtro padrão de hoje (datas vazias)');
+            
+            // Set today's date in inputs if they're empty
+            if (chartDateStartEl && !chartDateStartEl.value) {
+                const todayStr = today.toISOString().split('T')[0];
+                chartDateStartEl.value = todayStr;
             }
-        });
+            if (chartDateEndEl && !chartDateEndEl.value) {
+                const todayStr = today.toISOString().split('T')[0];
+                chartDateEndEl.value = todayStr;
+            }
+        }
     }
     
     console.log('Vendas filtradas:', filteredSales.length);
@@ -961,7 +1063,20 @@ function initializeCoupons() {
     
     const closePromotions = document.getElementById('closePromotions');
     if (closePromotions) {
-        closePromotions.addEventListener('click', () => closeModal('promotionsModal'));
+        closePromotions.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof closeModal === 'function') {
+                closeModal('promotionsModal');
+            } else if (window.closeModal) {
+                window.closeModal('promotionsModal');
+            } else {
+                const modal = document.getElementById('promotionsModal');
+                if (modal) {
+                    modal.classList.remove('active');
+                }
+            }
+        });
     }
     
     // Tabs
@@ -1421,9 +1536,37 @@ function deletePromotion(id) {
     showNotification('Promoção excluída com sucesso!', 'success');
 }
 
-// Make functions available globally
-window.editCoupon = editCoupon;
-window.deleteCoupon = deleteCoupon;
-window.editPromotion = editPromotion;
-window.deletePromotion = deletePromotion;
-
+// Make functions available globally immediately after definition
+// This ensures they're available as soon as the script loads
+(function() {
+    'use strict';
+    try {
+        // Make setChartPeriod available immediately
+        if (typeof setChartPeriod === 'function') {
+            window.setChartPeriod = setChartPeriod;
+            console.log('setChartPeriod disponibilizada no window');
+        }
+        
+        // Make generateCharts available immediately
+        if (typeof generateCharts === 'function') {
+            window.generateCharts = generateCharts;
+            console.log('generateCharts disponibilizada no window');
+        }
+        
+        // Make other functions available
+        if (typeof editCoupon === 'function') window.editCoupon = editCoupon;
+        if (typeof deleteCoupon === 'function') window.deleteCoupon = deleteCoupon;
+        if (typeof editPromotion === 'function') window.editPromotion = editPromotion;
+        if (typeof deletePromotion === 'function') window.deletePromotion = deletePromotion;
+        
+        // Log to verify functions are available
+        console.log('Funções disponibilizadas no window:', {
+            setChartPeriod: typeof window.setChartPeriod,
+            generateCharts: typeof window.generateCharts,
+            editCoupon: typeof window.editCoupon,
+            deleteCoupon: typeof window.deleteCoupon
+        });
+    } catch (error) {
+        console.error('Erro ao disponibilizar funções no window:', error);
+    }
+})();

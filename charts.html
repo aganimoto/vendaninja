@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="description" content="Gráficos e Dashboards - VendaNinja">
+    <meta name="theme-color" content="#2563eb">
+    <title>Gráficos e Dashboards - VendaNinja</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles-charts.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <a href="./" class="logo-link">
+                    <img src="assets/logo-ninja.svg" alt="VendaNinja" class="logo">
+                    <h1>VendaNinja</h1>
+                </a>
+            </div>
+            <div class="header-actions">
+                <a href="pdv.html" class="btn-icon" aria-label="Voltar para PDV" title="Voltar para PDV">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <span class="btn-icon-text">PDV</span>
+                </a>
+                <button class="btn-icon" id="cashRegisterBtn" aria-label="Caixa" title="Abrir/Fechar Caixa">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    <span class="btn-icon-text">Caixa</span>
+                </button>
+                <button class="btn-icon" id="themeToggle" aria-label="Alternar tema">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="themeIcon">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <span class="btn-icon-text">Tema</span>
+                </button>
+                <button class="btn-icon" id="settingsBtn" aria-label="Configurações">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3m15.364-6.364l-4.243 4.243m0-8.485l4.243 4.243M4.636 19.364l4.243-4.243m0-8.485L4.636 6.636"></path>
+                    </svg>
+                    <span class="btn-icon-text">Config</span>
+                </button>
+                <a href="charts.html" class="btn-icon active" aria-label="Gráficos e Dashboards" title="Gráficos e Dashboards">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span class="btn-icon-text">Gráficos</span>
+                </a>
+                <button class="btn-icon" id="reportsBtn" aria-label="Relatórios">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span class="btn-icon-text">Relatórios</span>
+                </button>
+                <button class="btn-icon" id="promotionsBtn" aria-label="Promoções e Cupons">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                        <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                    </svg>
+                    <span class="btn-icon-text">Cupons</span>
+                </button>
+                <button class="btn-icon" id="salesHistoryBtn" aria-label="Histórico de Vendas">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    <span class="btn-icon-text">Histórico</span>
+                </button>
+                <button class="btn-icon" id="backupBtn" aria-label="Backup">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span class="btn-icon-text">Backup</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="charts-main">
+        <!-- Filters -->
+        <section class="charts-filters-section">
+            <div class="charts-filters-container">
+                <div class="quick-period-buttons">
+                    <button class="btn-period active" data-period="today">
+                        <span class="icon">📅</span>
+                        <span>Hoje</span>
+                    </button>
+                    <button class="btn-period" data-period="7days">
+                        <span class="icon">📅</span>
+                        <span>7 Dias</span>
+                    </button>
+                    <button class="btn-period" data-period="30days">
+                        <span class="icon">📅</span>
+                        <span>30 Dias</span>
+                    </button>
+                    <button class="btn-period" data-period="all">
+                        <span class="icon">📅</span>
+                        <span>Tudo</span>
+                    </button>
+                </div>
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <label for="chartDateStart">Data Inicial</label>
+                        <input type="date" id="chartDateStart" class="form-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="chartDateEnd">Data Final</label>
+                        <input type="date" id="chartDateEnd" class="form-input">
+                    </div>
+                    <button class="btn-primary btn-generate" id="generateCharts">
+                        <span class="icon">📊</span>
+                        <span>Gerar Gráficos</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Metrics -->
+        <section class="metrics-section">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">💰</div>
+                    <div class="metric-content">
+                        <div class="metric-label">Total de Vendas</div>
+                        <div class="metric-value" id="metricTotalSales">0</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">💵</div>
+                    <div class="metric-content">
+                        <div class="metric-label">Receita Total</div>
+                        <div class="metric-value" id="metricTotalRevenue">R$ 0,00</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">📊</div>
+                    <div class="metric-content">
+                        <div class="metric-label">Ticket Médio</div>
+                        <div class="metric-value" id="metricAvgTicket">R$ 0,00</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">📈</div>
+                    <div class="metric-content">
+                        <div class="metric-label">Lucro Total</div>
+                        <div class="metric-value" id="metricTotalProfit">R$ 0,00</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Grid -->
+        <section class="charts-section">
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Vendas ao Longo do Tempo</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Top 10 Produtos Mais Vendidos</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="productsChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Formas de Pagamento</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="paymentChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Vendas por Dia da Semana</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="weekdayChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification" style="display: none;"></div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Configurações</h2>
+                <button class="modal-close" id="closeSettings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="businessName">Nome do Negócio:</label>
+                    <input type="text" id="businessName" class="form-input" placeholder="Ex: Lanchonete do João">
+                </div>
+                <div class="form-group">
+                    <label for="currency">Moeda:</label>
+                    <input type="text" id="currency" class="form-input" placeholder="R$" value="R$">
+                </div>
+                <div class="form-group">
+                    <label for="taxRate">Taxa de Imposto (%):</label>
+                    <input type="number" id="taxRate" class="form-input" min="0" max="100" step="0.01" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label for="timezone">Fuso Horário (UTC):</label>
+                    <select id="timezone" class="form-input">
+                        <!-- Options will be generated by JavaScript -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="pixKeyType">Tipo de Chave PIX:</label>
+                    <select id="pixKeyType" class="form-input">
+                        <option value="">Nenhuma</option>
+                        <option value="chavealeatoria">Chave Aleatória</option>
+                        <option value="celular">Celular</option>
+                        <option value="cpf">CPF</option>
+                        <option value="email">E-mail</option>
+                    </select>
+                </div>
+                <div class="form-group" id="pixKeyValueGroup" style="display: none;">
+                    <label for="pixKeyValue" id="pixKeyValueLabel">Chave PIX:</label>
+                    <input type="text" id="pixKeyValue" class="form-input" placeholder="Digite a chave PIX">
+                    <small id="pixKeyHelp" style="display: none; color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem;"></small>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-primary" id="saveSettings">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Modal -->
+    <div class="modal" id="reportsModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Relatórios</h2>
+                <button class="modal-close" id="closeReports">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="reports-filters">
+                    <div class="quick-period-buttons">
+                        <button class="btn-period" data-period="today">📅 Hoje</button>
+                        <button class="btn-period" data-period="7days">📅 Últimos 7 dias</button>
+                        <button class="btn-period" data-period="30days">📅 Últimos 30 dias</button>
+                    </div>
+                    <div class="filter-group">
+                        <label for="reportDateStart">Data Inicial:</label>
+                        <input type="date" id="reportDateStart" class="form-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="reportDateEnd">Data Final:</label>
+                        <input type="date" id="reportDateEnd" class="form-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="reportPaymentMethod">Forma de Pagamento:</label>
+                        <select id="reportPaymentMethod" class="form-input">
+                            <option value="">Todas</option>
+                            <option value="dinheiro">Dinheiro</option>
+                            <option value="pix">Pix</option>
+                            <option value="credito">Crédito</option>
+                            <option value="debito">Débito</option>
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn-primary" id="generateReport">📊 Gerar Relatório</button>
+                        <button class="btn-secondary" id="exportCSV">📥 Exportar CSV</button>
+                    </div>
+                </div>
+                <div class="reports-content" id="reportsContent">
+                    <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                        Selecione um período e clique em "Gerar Relatório"
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales History Modal -->
+    <div class="modal" id="salesHistoryModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Histórico de Vendas</h2>
+                <button class="modal-close" id="closeSalesHistory">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="history-filters">
+                    <input type="date" id="historyDateFilter" class="form-input">
+                    <input type="text" id="historySearch" class="form-input" placeholder="Buscar por produto ou CPF...">
+                </div>
+                <div class="sales-history" id="salesHistory">
+                    <!-- Sales history will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup/Restore Modal -->
+    <div class="modal" id="backupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Backup e Restore</h2>
+                <button class="modal-close" id="closeBackup">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="backup-section">
+                    <h3>Exportar Dados</h3>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+                        Exporte seus dados para fazer backup. Importe um arquivo JSON para restaurar.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Promotions and Coupons Modal -->
+    <div class="modal" id="promotionsModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>🏷️ Promoções e Cupons</h2>
+                <button class="modal-close" id="closePromotions">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="promotions-tabs">
+                    <button class="tab-btn active" data-tab="coupons">Cupons</button>
+                    <button class="tab-btn" data-tab="promotions">Promoções</button>
+                    <button class="tab-btn" data-tab="campaigns">Campanhas</button>
+                </div>
+                
+                <!-- Coupons Tab -->
+                <div class="tab-content active" id="couponsTab">
+                    <button class="btn-primary" id="addCouponBtn">+ Adicionar Cupom</button>
+                    <div class="coupons-list" id="couponsList">
+                        <!-- Coupons will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Promotions Tab -->
+                <div class="tab-content" id="promotionsTab">
+                    <button class="btn-primary" id="addPromotionBtn">+ Adicionar Promoção</button>
+                    <div class="promotions-list" id="promotionsList">
+                        <!-- Promotions will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Campaigns Tab -->
+                <div class="tab-content" id="campaignsTab">
+                    <button class="btn-primary" id="addCampaignBtn">+ Adicionar Campanha</button>
+                    <div class="campaigns-list" id="campaignsList">
+                        <!-- Campaigns will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script-db.js"></script>
+    <script src="script.js"></script>
+    <script src="script-charts-coupons.js"></script>
+    <script>
+        // Initialize charts page
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await initializeStorage();
+                await loadData();
+                
+                // Initialize theme
+                applyTheme();
+                applySettings();
+                updateCashRegisterButton();
+                
+                // Initialize event listeners
+                const themeToggle = document.getElementById('themeToggle');
+                if (themeToggle) {
+                    themeToggle.addEventListener('click', toggleTheme);
+                }
+                
+                const settingsBtn = document.getElementById('settingsBtn');
+                if (settingsBtn) {
+                    settingsBtn.addEventListener('click', () => {
+                        setupTimezoneOptions();
+                        openModal('settingsModal');
+                    });
+                }
+                
+                const closeSettings = document.getElementById('closeSettings');
+                if (closeSettings) {
+                    closeSettings.addEventListener('click', () => closeModal('settingsModal'));
+                }
+                
+                const saveSettingsBtn = document.getElementById('saveSettings');
+                if (saveSettingsBtn) {
+                    saveSettingsBtn.addEventListener('click', saveSettings);
+                }
+                
+                const pixKeyTypeEl = document.getElementById('pixKeyType');
+                if (pixKeyTypeEl) {
+                    pixKeyTypeEl.addEventListener('change', handlePixKeyTypeChange);
+                }
+                
+                // Reports button
+                const reportsBtn = document.getElementById('reportsBtn');
+                if (reportsBtn) {
+                    reportsBtn.addEventListener('click', () => {
+                        openModal('reportsModal');
+                        setReportPeriod('today');
+                        setTimeout(() => {
+                            generateReport();
+                        }, 200);
+                    });
+                }
+                
+                const closeReports = document.getElementById('closeReports');
+                if (closeReports) {
+                    closeReports.addEventListener('click', () => closeModal('reportsModal'));
+                }
+                
+                const generateReportBtn = document.getElementById('generateReport');
+                if (generateReportBtn) {
+                    generateReportBtn.addEventListener('click', () => {
+                        generateReport();
+                    });
+                }
+                
+                // Sales History button
+                const salesHistoryBtn = document.getElementById('salesHistoryBtn');
+                if (salesHistoryBtn) {
+                    salesHistoryBtn.addEventListener('click', () => {
+                        openModal('salesHistoryModal');
+                        renderSalesHistory();
+                    });
+                }
+                
+                const closeSalesHistory = document.getElementById('closeSalesHistory');
+                if (closeSalesHistory) {
+                    closeSalesHistory.addEventListener('click', () => closeModal('salesHistoryModal'));
+                }
+                
+                // Backup button
+                const backupBtn = document.getElementById('backupBtn');
+                if (backupBtn) {
+                    backupBtn.addEventListener('click', handleBackup);
+                }
+                
+                const closeBackup = document.getElementById('closeBackup');
+                if (closeBackup) {
+                    closeBackup.addEventListener('click', () => closeModal('backupModal'));
+                }
+                
+                // Promotions button
+                const promotionsBtn = document.getElementById('promotionsBtn');
+                if (promotionsBtn) {
+                    promotionsBtn.addEventListener('click', () => {
+                        openModal('promotionsModal');
+                    });
+                }
+                
+                // Initialize coupons if function exists
+                if (typeof initializeCoupons === 'function') {
+                    initializeCoupons();
+                }
+                
+                // Period buttons - direct event listeners
+                function setupPeriodButtons() {
+                    const periodButtons = document.querySelectorAll('.quick-period-buttons .btn-period');
+                    console.log('Found period buttons:', periodButtons.length);
+                    
+                    periodButtons.forEach(btn => {
+                        // Remove any existing listeners by cloning
+                        const newBtn = btn.cloneNode(true);
+                        btn.parentNode.replaceChild(newBtn, btn);
+                        
+                        newBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const period = this.dataset.period;
+                            console.log('Period button clicked:', period);
+                            
+                            if (!period) {
+                                console.error('Period not found in button dataset');
+                                return;
+                            }
+                            
+                            // Remove active from all buttons
+                            document.querySelectorAll('.quick-period-buttons .btn-period').forEach(b => {
+                                b.classList.remove('active');
+                            });
+                            
+                            // Add active to clicked button
+                            this.classList.add('active');
+                            
+                            // Call setChartPeriod - only use window to avoid scope issues
+                            if (typeof window.setChartPeriod === 'function') {
+                                console.log('Calling window.setChartPeriod with:', period);
+                                try {
+                                    window.setChartPeriod(period);
+                                } catch (error) {
+                                    console.error('Erro ao chamar setChartPeriod:', error);
+                                    alert('Erro ao definir período. Recarregue a página.');
+                                }
+                            } else {
+                                console.error('window.setChartPeriod function not found');
+                                console.log('Available functions:', {
+                                    windowSetChartPeriod: typeof window.setChartPeriod,
+                                    windowGenerateCharts: typeof window.generateCharts
+                                });
+                                alert('Erro: Função setChartPeriod não encontrada. Recarregue a página.');
+                            }
+                        });
+                    });
+                    
+                    console.log('Period buttons event listeners set up successfully');
+                }
+                
+                // Setup period buttons
+                setupPeriodButtons();
+                
+                // Set default period to today and generate charts immediately
+                function initializeChartsWithToday() {
+                    // Set today's date in inputs
+                    const chartDateStart = document.getElementById('chartDateStart');
+                    const chartDateEnd = document.getElementById('chartDateEnd');
+                    const today = new Date();
+                    const todayStr = today.toISOString().split('T')[0];
+                    
+                    if (chartDateStart && chartDateEnd) {
+                        chartDateStart.value = todayStr;
+                        chartDateEnd.value = todayStr;
+                        console.log('Datas configuradas para hoje:', todayStr);
+                    }
+                    
+                    // Set "today" button as active
+                    const todayButton = document.querySelector('.quick-period-buttons .btn-period[data-period="today"]');
+                    if (todayButton) {
+                        document.querySelectorAll('.quick-period-buttons .btn-period').forEach(b => {
+                            b.classList.remove('active');
+                        });
+                        todayButton.classList.add('active');
+                        console.log('Botão "Hoje" ativado');
+                    }
+                    
+                    // Generate charts with today's data - only use window to avoid scope issues
+                    if (typeof window.generateCharts === 'function') {
+                        console.log('Gerando gráficos com dados de hoje...');
+                        setTimeout(() => {
+                            try {
+                                window.generateCharts();
+                                console.log('Gráficos gerados com sucesso');
+                            } catch (error) {
+                                console.error('Erro ao gerar gráficos:', error);
+                            }
+                        }, 300);
+                    } else {
+                        console.error('window.generateCharts não encontrada');
+                        console.log('Available functions:', {
+                            windowGenerateCharts: typeof window.generateCharts,
+                            windowSetChartPeriod: typeof window.setChartPeriod
+                        });
+                    }
+                }
+                
+                // Initialize with today's data after scripts are loaded
+                // Wait a bit longer to ensure script-charts-coupons.js is fully loaded
+                function waitForGenerateCharts(callback, maxAttempts = 30) {
+                    let attempts = 0;
+                    const checkInterval = setInterval(() => {
+                        attempts++;
+                        const generateChartsType = typeof window.generateCharts;
+                        const setChartPeriodType = typeof window.setChartPeriod;
+                        
+                        if (generateChartsType === 'function' && setChartPeriodType === 'function') {
+                            clearInterval(checkInterval);
+                            console.log('Funções encontradas após', attempts, 'tentativas');
+                            callback();
+                        } else if (attempts >= maxAttempts) {
+                            clearInterval(checkInterval);
+                            console.error('Funções não encontradas após', maxAttempts, 'tentativas');
+                            console.log('Available:', {
+                                windowGenerateCharts: generateChartsType,
+                                windowSetChartPeriod: setChartPeriodType
+                            });
+                            // Try anyway - maybe it will work
+                            callback();
+                        } else {
+                            // Log progress every 5 attempts
+                            if (attempts % 5 === 0) {
+                                console.log('Aguardando funções...', attempts, '/', maxAttempts, {
+                                    generateCharts: generateChartsType,
+                                    setChartPeriod: setChartPeriodType
+                                });
+                            }
+                        }
+                    }, 100);
+                }
+                
+                waitForGenerateCharts(() => {
+                    initializeChartsWithToday();
+                }, 30);
+                
+                // Generate button
+                const generateBtn = document.getElementById('generateCharts');
+                if (generateBtn) {
+                    generateBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        console.log('Botão Gerar Gráficos clicado');
+                        
+                        // Read dates from inputs
+                        const chartDateStart = document.getElementById('chartDateStart');
+                        const chartDateEnd = document.getElementById('chartDateEnd');
+                        
+                        console.log('Datas selecionadas:', {
+                            start: chartDateStart ? chartDateStart.value : 'não encontrado',
+                            end: chartDateEnd ? chartDateEnd.value : 'não encontrado'
+                        });
+                        
+                        if (typeof window.generateCharts === 'function') {
+                            console.log('Chamando window.generateCharts...');
+                            try {
+                                window.generateCharts();
+                            } catch (error) {
+                                console.error('Erro ao chamar generateCharts:', error);
+                                alert('Erro ao gerar gráficos. Verifique o console para mais detalhes.');
+                            }
+                        } else {
+                            console.error('window.generateCharts não encontrado');
+                            console.log('Available functions:', {
+                                windowGenerateCharts: typeof window.generateCharts,
+                                windowSetChartPeriod: typeof window.setChartPeriod
+                            });
+                            alert('Erro: Função generateCharts não encontrada. Recarregue a página.');
+                        }
+                    });
+                } else {
+                    console.error('Botão generateCharts não encontrado');
+                }
+            } catch (error) {
+                console.error('Erro na inicialização:', error);
+            }
+        });
+    </script>
+</body>
+</html>
+
